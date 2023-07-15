@@ -1,4 +1,4 @@
-enum Token {
+pub(crate) enum Token {
     Illegal,
     EndOfFile,
     Identifier(String),
