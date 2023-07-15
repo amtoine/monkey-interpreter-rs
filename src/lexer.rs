@@ -53,6 +53,8 @@ impl Lexer {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
+
     use super::Lexer;
     use crate::token::Token;
 
@@ -111,7 +113,7 @@ let result = add(five, ten);
         let mut lexer = Lexer::new(input.to_string());
 
         for (i, expected_token) in expected_tokens.iter().enumerate() {
-            assert_eq!(&lexer.next_token(), expected_token, "test {}", i);
+            assert_eq!(&lexer.next_token(), expected_token, "token {}", i);
         }
     }
 }
