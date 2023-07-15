@@ -32,7 +32,36 @@ impl Lexer {
         self.read_position += 1;
     }
 
+    fn skip_whitespaces(&mut self) {
+        while self.char == ' ' || self.char == '\n' || self.char == '\r' || self.char == '\t' {
+            self.read_char();
+        }
+    }
+
+    fn read_identifier(&mut self) -> String {
+        let identifier_start_position = self.position;
+        while is_valid_identifier_char(self.char) {
+            self.read_char();
+        }
+
+        self.input[identifier_start_position..self.position].to_string()
+    }
+
+    fn read_integer(&mut self) -> u32 {
+        let value_start_position = self.position;
+        while is_valid_integer_digit(self.char) {
+            self.read_char();
+        }
+
+        self.input[value_start_position..self.position]
+            .to_string()
+            .parse()
+            .unwrap()
+    }
+
     fn next_token(&mut self) -> Token {
+        self.skip_whitespaces();
+
         let token = match self.char {
             '=' => Token::Assign,
             '+' => Token::Plus,
@@ -43,13 +72,33 @@ impl Lexer {
             ',' => Token::Comma,
             ';' => Token::Semicolon,
             '\0' => Token::EndOfFile,
-            _ => Token::Illegal,
+            _ => {
+                if is_valid_identifier_char(self.char) {
+                    return match self.read_identifier().as_ref() {
+                        "let" => Token::Let,
+                        "fn" => Token::Function,
+                        id => Token::Identifier(id.to_string()),
+                    };
+                } else if is_valid_integer_digit(self.char) {
+                    return Token::Int(self.read_integer());
+                } else {
+                    Token::Illegal
+                }
+            }
         };
 
         self.read_char();
 
         token
     }
+}
+
+fn is_valid_identifier_char(char: char) -> bool {
+    ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_'
+}
+
+fn is_valid_integer_digit(char: char) -> bool {
+    '0' <= char && char <= '9'
 }
 
 #[cfg(test)]
