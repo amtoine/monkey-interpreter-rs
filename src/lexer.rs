@@ -111,13 +111,7 @@ let result = add(five, ten);
         let mut lexer = Lexer::new(input.to_string());
 
         for (i, expected_token) in expected_tokens.iter().enumerate() {
-            let token = lexer.next_token();
-
-            assert_eq!(
-                &token, expected_token,
-                "test {} - wrong token: expected {:?} got {:?}",
-                i, expected_token, token
-            );
+            assert_eq!(&lexer.next_token(), expected_token, "test {}", i);
         }
     }
 }
