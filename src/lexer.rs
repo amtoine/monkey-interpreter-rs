@@ -25,8 +25,8 @@ mod tests {
             let token = lexer.next_token();
 
             assert_eq!(
-                token, expected_token,
-                "test {} - wrong token: expected {} got {}",
+                &token, expected_token,
+                "test {} - wrong token: expected {:?} got {:?}",
                 i, expected_token, token
             );
         }
