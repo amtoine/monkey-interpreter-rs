@@ -58,16 +58,52 @@ mod tests {
 
     #[test]
     fn next_token() {
-        let input = "=+(){},;";
+        let input = "let five = 5;
+let ten = 10;
+
+let add = fn(x, y) {
+  x + y;
+};
+
+let result = add(five, ten);
+";
 
         let expected_tokens = [
+            Token::Let,
+            Token::Identifier("five".to_string()),
             Token::Assign,
-            Token::Plus,
+            Token::Int(5),
+            Token::Semicolon,
+            Token::Let,
+            Token::Identifier("ten".to_string()),
+            Token::Assign,
+            Token::Int(10),
+            Token::Semicolon,
+            Token::Let,
+            Token::Identifier("add".to_string()),
+            Token::Assign,
+            Token::Function,
             Token::LeftParen,
+            Token::Identifier("x".to_string()),
+            Token::Comma,
+            Token::Identifier("y".to_string()),
             Token::RightParen,
             Token::LeftBrace,
+            Token::Identifier("x".to_string()),
+            Token::Plus,
+            Token::Identifier("y".to_string()),
+            Token::Semicolon,
             Token::RightBrace,
+            Token::Semicolon,
+            Token::Let,
+            Token::Identifier("result".to_string()),
+            Token::Assign,
+            Token::Identifier("add".to_string()),
+            Token::LeftParen,
+            Token::Identifier("x".to_string()),
             Token::Comma,
+            Token::Identifier("y".to_string()),
+            Token::RightParen,
             Token::Semicolon,
             Token::EndOfFile,
         ];
