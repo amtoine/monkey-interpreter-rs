@@ -118,6 +118,9 @@ let add = fn(x, y) {
 };
 
 let result = add(five, ten);
+
+!-/*1;
+2 < 3 > 4;
 ";
 
         let expected_tokens = [
@@ -156,6 +159,18 @@ let result = add(five, ten);
             Token::Comma,
             Token::Identifier("ten".to_string()),
             Token::RightParen,
+            Token::Semicolon,
+            Token::Bang,
+            Token::Minus,
+            Token::Slash,
+            Token::Asterisk,
+            Token::Int(1),
+            Token::Semicolon,
+            Token::Int(2),
+            Token::LessThan,
+            Token::Int(3),
+            Token::GreaterThan,
+            Token::Int(4),
             Token::Semicolon,
             Token::EndOfFile,
         ];
