@@ -22,11 +22,7 @@ impl Lexer {
     }
 
     fn peek_char(&self) -> char {
-        if self.read_position >= self.input.len() {
-            '\0'
-        } else {
-            self.input.chars().nth(self.read_position).unwrap()
-        }
+        self.input.chars().nth(self.read_position).unwrap_or('\0')
     }
 
     fn read_char(&mut self) {
