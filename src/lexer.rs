@@ -127,6 +127,12 @@ let result = add(five, ten);
 
 !-/*1;
 2 < 3 > 4;
+
+if (6 < 7) {
+    return true;
+} else {
+    return false;
+}
 ";
 
         let expected_tokens = [
@@ -178,6 +184,23 @@ let result = add(five, ten);
             Token::GreaterThan,
             Token::Int(4),
             Token::Semicolon,
+            Token::If,
+            Token::LeftParen,
+            Token::Int(6),
+            Token::LessThan,
+            Token::Int(7),
+            Token::RightParen,
+            Token::LeftBrace,
+            Token::Return,
+            Token::True,
+            Token::Semicolon,
+            Token::RightBrace,
+            Token::Else,
+            Token::LeftBrace,
+            Token::Return,
+            Token::False,
+            Token::Semicolon,
+            Token::RightBrace,
             Token::EndOfFile,
         ];
 
