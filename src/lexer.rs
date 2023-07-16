@@ -72,6 +72,12 @@ impl Lexer {
             ',' => Token::Comma,
             ';' => Token::Semicolon,
             '\0' => Token::EndOfFile,
+            '!' => Token::Bang,
+            '-' => Token::Minus,
+            '/' => Token::Slash,
+            '*' => Token::Asterisk,
+            '<' => Token::LessThan,
+            '>' => Token::GreaterThan,
             _ => {
                 if is_valid_identifier_char(self.char) {
                     return match self.read_identifier().as_ref() {

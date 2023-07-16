@@ -14,4 +14,10 @@ pub(crate) enum Token {
     RightBrace,
     Function,
     Let,
+    Bang,
+    Minus,
+    Slash,
+    Asterisk,
+    LessThan,
+    GreaterThan,
 }
