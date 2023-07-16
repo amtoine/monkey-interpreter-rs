@@ -4,7 +4,6 @@ use crate::token::Token;
 struct Lexer {
     input: String,
     position: usize,
-    read_position: usize,
     char: char,
 }
 
@@ -13,22 +12,20 @@ impl Lexer {
         let mut lexer = Lexer {
             input,
             position: 0,
-            read_position: 0,
             char: '\0',
         };
-        lexer.read_char();
+        lexer.char = lexer.peek_char();
 
         lexer
     }
 
     fn peek_char(&self) -> char {
-        self.input.chars().nth(self.read_position).unwrap_or('\0')
+        self.input.chars().nth(self.position + 1).unwrap_or('\0')
     }
 
     fn read_char(&mut self) {
         self.char = self.peek_char();
-        self.position = self.read_position;
-        self.read_position += 1;
+        self.position += 1;
     }
 
     fn skip_whitespaces(&mut self) {
