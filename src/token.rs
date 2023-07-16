@@ -20,4 +20,9 @@ pub(crate) enum Token {
     Asterisk,
     LessThan,
     GreaterThan,
+    If,
+    Else,
+    Return,
+    True,
+    False,
 }

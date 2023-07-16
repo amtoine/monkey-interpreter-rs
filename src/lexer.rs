@@ -83,6 +83,11 @@ impl Lexer {
                     return match self.read_identifier().as_ref() {
                         "let" => Token::Let,
                         "fn" => Token::Function,
+                        "if" => Token::If,
+                        "else" => Token::Else,
+                        "return" => Token::Return,
+                        "true" => Token::True,
+                        "false" => Token::False,
                         id => Token::Identifier(id.to_string()),
                     };
                 } else if is_valid_integer_digit(self.char) {
