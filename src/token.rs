@@ -25,4 +25,6 @@ pub(crate) enum Token {
     Return,
     True,
     False,
+    EqualTo,
+    NotEqualTo,
 }

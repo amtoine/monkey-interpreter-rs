@@ -21,13 +21,16 @@ impl Lexer {
         lexer
     }
 
-    fn read_char(&mut self) {
+    fn peek_char(&self) -> char {
         if self.read_position >= self.input.len() {
-            self.char = '\0';
+            '\0'
         } else {
-            self.char = self.input.chars().nth(self.read_position).unwrap();
+            self.input.chars().nth(self.read_position).unwrap()
         }
+    }
 
+    fn read_char(&mut self) {
+        self.char = self.peek_char();
         self.position = self.read_position;
         self.read_position += 1;
     }
@@ -63,7 +66,13 @@ impl Lexer {
         self.skip_whitespaces();
 
         let token = match self.char {
-            '=' => Token::Assign,
+            '=' => match self.peek_char() {
+                '=' => {
+                    self.read_char();
+                    Token::EqualTo
+                }
+                _ => Token::Assign,
+            },
             '+' => Token::Plus,
             '(' => Token::LeftParen,
             ')' => Token::RightParen,
@@ -72,7 +81,13 @@ impl Lexer {
             ',' => Token::Comma,
             ';' => Token::Semicolon,
             '\0' => Token::EndOfFile,
-            '!' => Token::Bang,
+            '!' => match self.peek_char() {
+                '=' => {
+                    self.read_char();
+                    Token::NotEqualTo
+                }
+                _ => Token::Bang,
+            },
             '-' => Token::Minus,
             '/' => Token::Slash,
             '*' => Token::Asterisk,
