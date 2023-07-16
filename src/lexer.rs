@@ -138,6 +138,9 @@ if (6 < 7) {
 } else {
     return false;
 }
+
+8 == 8;
+9 != 11;
 ";
 
         let expected_tokens = [
@@ -206,6 +209,14 @@ if (6 < 7) {
             Token::False,
             Token::Semicolon,
             Token::RightBrace,
+            Token::Int(8),
+            Token::EqualTo,
+            Token::Int(8),
+            Token::Semicolon,
+            Token::Int(9),
+            Token::NotEqualTo,
+            Token::Int(11),
+            Token::Semicolon,
             Token::EndOfFile,
         ];
 
