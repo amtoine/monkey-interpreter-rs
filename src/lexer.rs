@@ -1,14 +1,14 @@
 use crate::token::Token;
 
 #[derive(Debug)]
-struct Lexer {
+pub(crate) struct Lexer {
     input: String,
     position: usize,
     char: char,
 }
 
 impl Lexer {
-    fn new(input: String) -> Lexer {
+    pub(crate) fn new(input: String) -> Lexer {
         let mut lexer = Lexer {
             input,
             position: 0,
@@ -55,7 +55,7 @@ impl Lexer {
             .unwrap()
     }
 
-    fn next_token(&mut self) -> Token {
+    pub(crate) fn next_token(&mut self) -> Token {
         self.skip_whitespaces();
 
         let token = match self.char {
