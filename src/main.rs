@@ -1,6 +1,8 @@
 use std::io::Write;
 
+mod ast;
 mod lexer;
+mod parser;
 mod token;
 
 fn main() {
