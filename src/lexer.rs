@@ -113,11 +113,11 @@ impl Lexer {
 }
 
 fn is_valid_identifier_char(char: char) -> bool {
-    ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_'
+    char.is_ascii_lowercase() || char.is_ascii_uppercase()
 }
 
 fn is_valid_integer_digit(char: char) -> bool {
-    '0' <= char && char <= '9'
+    char.is_ascii_digit()
 }
 
 #[cfg(test)]
