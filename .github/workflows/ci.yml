@@ -24,7 +24,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Clippy
-        run: cargo clippy --workpace -- $CLIPPY_OPTIONS
+        run: cargo clippy --workspace -- $CLIPPY_OPTIONS
 
       - name: Tests
         run: cargo test
