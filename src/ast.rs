@@ -2,8 +2,9 @@ pub(crate) enum Statement {
     Let(Identifier, Expression),
 }
 
-pub(crate) enum Expression {}
-
+pub(crate) enum Expression {
+    Dummy,
+}
 
 #[derive(Debug)]
 pub(crate) struct Identifier {
