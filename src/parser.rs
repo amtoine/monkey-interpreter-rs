@@ -9,6 +9,7 @@ struct Parser {
     lexer: Lexer,
     curr: Token,
     peek: Token,
+    errors: Vec<String>,
 }
 
 impl Parser {
@@ -17,6 +18,7 @@ impl Parser {
             lexer,
             curr: Token::Illegal,
             peek: Token::Illegal,
+            errors: vec![],
         };
 
         p.next_token();
@@ -34,8 +36,9 @@ impl Parser {
         let mut program = Program { statements: vec![] };
 
         while self.curr != Token::EndOfFile {
-            if let Some(statement) = self.parse_statement() {
-                program.statements.push(statement);
+            match self.parse_statement() {
+                Ok(statement) => program.statements.push(statement),
+                Err(err) => self.errors.push(err),
             }
 
             self.next_token();
@@ -44,16 +47,24 @@ impl Parser {
         program
     }
 
-    fn parse_statement(&mut self) -> Option<Statement> {
+    fn parse_statement(&mut self) -> Result<Statement, String> {
         match self.curr {
             Token::Let => self.parse_let_statement(),
-            _ => None,
+            _ => Err("not implemented".into()),
         }
     }
 
-    fn parse_let_statement(&mut self) -> Option<Statement> {
+    fn error(&mut self, expected: String) -> String {
+        format!(
+            "parser error: expected next token to be {}, got {:?} instead",
+            expected,
+            self.peek,
+        )
+    }
+
+    fn parse_let_statement(&mut self) -> Result<Statement, String> {
         if !matches!(self.peek, Token::Identifier(_)) {
-            return None;
+            return Err(self.error("Identifier".into()));
         }
         self.next_token();
 
@@ -62,7 +73,7 @@ impl Parser {
         };
 
         if !matches!(self.peek, Token::Assign) {
-            return None;
+            return Err(self.error("Assign".into()));
         }
         self.next_token();
 
@@ -71,7 +82,7 @@ impl Parser {
             self.next_token();
         }
 
-        return Some(Statement::Let(id, Expression::Dummy));
+        return Ok(Statement::Let(id, Expression::Dummy));
     }
 }
 
@@ -92,6 +103,14 @@ let foobar = 838383;
         let lexer = Lexer::new(input.into());
         let mut parser = Parser::new(lexer);
         let program = parser.parse();
+
+        assert_eq!(
+            parser.errors.len(),
+            0,
+            "parser should not have encountered errors, found {}: \n{}",
+            parser.errors.len(),
+            parser.errors.join("\n"),
+        );
 
         assert_eq!(
             program.statements.len(),
