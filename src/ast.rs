@@ -1,6 +1,7 @@
 #[derive(Debug, PartialEq)]
 pub(crate) enum Statement {
     Let(Identifier, Expression),
+    Return(Expression),
 }
 
 #[derive(Debug, PartialEq)]

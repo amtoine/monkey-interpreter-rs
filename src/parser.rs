@@ -50,6 +50,7 @@ impl Parser {
     fn parse_statement(&mut self) -> Result<Statement, String> {
         match self.curr {
             Token::Let => self.parse_let_statement(),
+            Token::Return => self.parse_return_statement(),
             _ => Err("not implemented".into()),
         }
     }
@@ -83,6 +84,17 @@ impl Parser {
 
         return Ok(Statement::Let(id, Expression::Dummy));
     }
+
+    fn parse_return_statement(&mut self) -> Result<Statement, String> {
+        self.next_token();
+
+        // TODO: skipping all other expressions until semicolon for now
+        while !matches!(self.curr, Token::Semicolon) {
+            self.next_token();
+        }
+
+        return Ok(Statement::Return(Expression::Dummy));
+    }
 }
 
 #[cfg(test)]
@@ -101,6 +113,10 @@ mod tests {
         let input = "let x = 5;
 let y = 10;
 let foobar = 838383;
+
+return 5;
+return 10;
+return 993322;
 ";
         let expected_program = vec![
             Statement::Let(Identifier { value: "x".into() }, Expression::Dummy),
@@ -111,6 +127,9 @@ let foobar = 838383;
                 },
                 Expression::Dummy,
             ),
+            Statement::Return(Expression::Dummy),
+            Statement::Return(Expression::Dummy),
+            Statement::Return(Expression::Dummy),
         ];
 
         let lexer = Lexer::new(input.into());
