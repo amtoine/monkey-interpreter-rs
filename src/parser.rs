@@ -57,8 +57,7 @@ impl Parser {
     fn error(&mut self, expected: String) -> String {
         format!(
             "parser error: expected next token to be {}, got {:?} instead",
-            expected,
-            self.peek,
+            expected, self.peek,
         )
     }
 
@@ -90,7 +89,10 @@ impl Parser {
 mod tests {
     use pretty_assertions::assert_eq;
 
-    use crate::{ast::Statement, lexer::Lexer};
+    use crate::{
+        ast::{Expression, Identifier, Statement},
+        lexer::Lexer,
+    };
 
     use super::Parser;
 
@@ -100,6 +102,17 @@ mod tests {
 let y = 10;
 let foobar = 838383;
 ";
+        let expected_program = vec![
+            Statement::Let(Identifier { value: "x".into() }, Expression::Dummy),
+            Statement::Let(Identifier { value: "y".into() }, Expression::Dummy),
+            Statement::Let(
+                Identifier {
+                    value: "foobar".into(),
+                },
+                Expression::Dummy,
+            ),
+        ];
+
         let lexer = Lexer::new(input.into());
         let mut parser = Parser::new(lexer);
         let program = parser.parse();
@@ -114,21 +127,14 @@ let foobar = 838383;
 
         assert_eq!(
             program.statements.len(),
-            3,
-            "program does not contain 3 statements, got {}",
+            expected_program.len(),
+            "program does not contain {} statements, got {}",
+            expected_program.len(),
             program.statements.len()
         );
 
-        let expected_identifiers = vec![
-            r#"Identifier("x")"#,
-            r#"Identifier("y")"#,
-            r#"Identifier("foobar")"#,
-        ];
-        for (s, e) in program.statements.iter().zip(expected_identifiers) {
-            matches!(s, Statement::Let(..));
-            let Statement::Let(id, _) = s;
-
-            assert_eq!(id.value, e);
+        for (s, e) in program.statements.iter().zip(expected_program) {
+            assert_eq!(s, &e);
         }
     }
 }

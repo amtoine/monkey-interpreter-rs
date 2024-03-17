@@ -1,12 +1,14 @@
+#[derive(Debug, PartialEq)]
 pub(crate) enum Statement {
     Let(Identifier, Expression),
 }
 
+#[derive(Debug, PartialEq)]
 pub(crate) enum Expression {
     Dummy,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub(crate) struct Identifier {
     pub value: String,
 }
