@@ -2,10 +2,12 @@
 pub(crate) enum Statement {
     Let(Identifier, Expression),
     Return(Expression),
+    Expression(Expression),
 }
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Expression {
+    Identifier(String),
     Dummy,
 }
 

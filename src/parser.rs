@@ -6,8 +6,19 @@ use crate::{
     token::Token,
 };
 
-type PrefixFn = dyn Fn () -> Expression;
-type InfixFn = dyn Fn (Expression) -> Expression;
+type PrefixFn = dyn Fn() -> Expression;
+type InfixFn = dyn Fn(Expression) -> Expression;
+
+#[derive(PartialEq, PartialOrd)]
+enum OpPrecedence {
+    LOWEST,
+    EQUALS,
+    LESSGREATER,
+    SUM,
+    PRODUCT,
+    PREFIX,
+    CALL,
+}
 
 struct Parser {
     lexer: Lexer,
@@ -15,8 +26,8 @@ struct Parser {
     peek: Token,
     errors: Vec<String>,
 
-    prefix_fns: HashMap<String, Box<PrefixFn>>,
-    infix_fns: HashMap<String, Box<InfixFn>>,
+    prefix_fns: HashMap<Token, Box<PrefixFn>>,
+    infix_fns: HashMap<Token, Box<InfixFn>>,
 }
 
 impl Parser {
@@ -60,7 +71,7 @@ impl Parser {
         match self.curr {
             Token::Let => self.parse_let_statement(),
             Token::Return => self.parse_return_statement(),
-            _ => Err("not implemented".into()),
+            _ => self.parse_expression_statement(),
         }
     }
 
@@ -104,6 +115,26 @@ impl Parser {
 
         return Ok(Statement::Return(Expression::Dummy));
     }
+
+    fn parse_expression_statement(&mut self) -> Result<Statement, String> {
+        let expr = self.parse_expression(OpPrecedence::LOWEST)?;
+
+        if !matches!(self.peek, Token::Semicolon) {
+            self.next_token();
+        }
+
+        return Ok(Statement::Expression(expr));
+    }
+
+    fn parse_expression(&mut self, precedence: OpPrecedence) -> Result<Expression, String> {
+        match self.prefix_fns.get(&self.curr) {
+            Some(prefix) => Ok(prefix()),
+            None => Err(format!(
+                "could not find token {} in the prefixes",
+                self.curr
+            )),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -126,6 +157,8 @@ let foobar = 838383;
 return 5;
 return 10;
 return 993322;
+
+foobar;
 ";
         let expected_program = vec![
             Statement::Let(Identifier { value: "x".into() }, Expression::Dummy),
@@ -139,6 +172,7 @@ return 993322;
             Statement::Return(Expression::Dummy),
             Statement::Return(Expression::Dummy),
             Statement::Return(Expression::Dummy),
+            Statement::Expression(Expression::Identifier("foobar".into())),
         ];
 
         let lexer = Lexer::new(input.into());
