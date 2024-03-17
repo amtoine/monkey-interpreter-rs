@@ -1,15 +1,22 @@
+use std::collections::HashMap;
+
 use crate::{
     ast::{Expression, Identifier, Program, Statement},
     lexer::Lexer,
     token::Token,
 };
 
-#[derive(Debug)]
+type PrefixFn = dyn Fn () -> Expression;
+type InfixFn = dyn Fn (Expression) -> Expression;
+
 struct Parser {
     lexer: Lexer,
     curr: Token,
     peek: Token,
     errors: Vec<String>,
+
+    prefix_fns: HashMap<String, Box<PrefixFn>>,
+    infix_fns: HashMap<String, Box<InfixFn>>,
 }
 
 impl Parser {
@@ -19,6 +26,8 @@ impl Parser {
             curr: Token::Illegal,
             peek: Token::Illegal,
             errors: vec![],
+            prefix_fns: HashMap::new(),
+            infix_fns: HashMap::new(),
         };
 
         p.next_token();
