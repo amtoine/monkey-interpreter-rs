@@ -68,7 +68,7 @@ impl Parser {
         self.next_token();
 
         let id = Identifier {
-            value: format!("{:?}", self.curr),
+            value: format!("{}", self.curr),
         };
 
         if !matches!(self.peek, Token::Assign) {
