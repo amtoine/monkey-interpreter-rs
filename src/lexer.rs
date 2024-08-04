@@ -29,14 +29,14 @@ impl Lexer {
     }
 
     fn skip_whitespaces(&mut self) {
-        while self.char == ' ' || self.char == '\n' || self.char == '\r' || self.char == '\t' {
+        while self.char.is_ascii_whitespace() {
             self.read_char();
         }
     }
 
     fn read_identifier(&mut self) -> String {
         let identifier_start_position = self.position;
-        while is_valid_identifier_char(self.char) {
+        while self.char.is_ascii_alphabetic() {
             self.read_char();
         }
 
@@ -45,7 +45,7 @@ impl Lexer {
 
     fn read_integer(&mut self) -> u32 {
         let value_start_position = self.position;
-        while is_valid_integer_digit(self.char) {
+        while self.char.is_ascii_digit() {
             self.read_char();
         }
 
@@ -87,7 +87,7 @@ impl Lexer {
             '<' => Token::LessThan,
             '>' => Token::GreaterThan,
             _ => {
-                if is_valid_identifier_char(self.char) {
+                if self.char.is_ascii_alphabetic() {
                     return match self.read_identifier().as_ref() {
                         "let" => Token::Let,
                         "fn" => Token::Function,
@@ -98,7 +98,7 @@ impl Lexer {
                         "false" => Token::False,
                         id => Token::Identifier(id.to_string()),
                     };
-                } else if is_valid_integer_digit(self.char) {
+                } else if self.char.is_ascii_digit() {
                     return Token::Int(self.read_integer());
                 } else {
                     Token::Illegal
@@ -110,14 +110,6 @@ impl Lexer {
 
         token
     }
-}
-
-fn is_valid_identifier_char(char: char) -> bool {
-    char.is_ascii_lowercase() || char.is_ascii_uppercase()
-}
-
-fn is_valid_integer_digit(char: char) -> bool {
-    char.is_ascii_digit()
 }
 
 #[cfg(test)]
