@@ -1,5 +1,7 @@
-.PHONY: all fmt-check fmt clippy test
-DEFAULT: check
+.PHONY: all fmt fmt-check clippy test
+
+default: all
+all: fmt-check clippy test
 
 fmt-check:
 	cargo fmt --all -- --check
