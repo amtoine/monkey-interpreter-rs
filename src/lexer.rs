@@ -117,124 +117,126 @@ mod tests {
     use super::Lexer;
     use crate::token::Token;
 
-    #[test]
-    fn next_token() {
-        let input = "let five = 5;
-let ten = 10;
-
-let add = fn(x, y) {
-  x + y;
-};
-
-let result = add(five, ten);
-
-!-/*1;
-2 < 3 > 4;
-
-if (6 < 7) {
-    return true;
-} else {
-    return false;
-}
-
-8 == 8;
-9 != 11;
-";
-
-        let expected_tokens = [
-            Token::Let,
-            Token::Identifier("five".to_string()),
-            Token::Assign,
-            Token::Int(5),
-            Token::Semicolon,
-            Token::Let,
-            Token::Identifier("ten".to_string()),
-            Token::Assign,
-            Token::Int(10),
-            Token::Semicolon,
-            Token::Let,
-            Token::Identifier("add".to_string()),
-            Token::Assign,
-            Token::Function,
-            Token::LeftParen,
-            Token::Identifier("x".to_string()),
-            Token::Comma,
-            Token::Identifier("y".to_string()),
-            Token::RightParen,
-            Token::LeftBrace,
-            Token::Identifier("x".to_string()),
-            Token::Plus,
-            Token::Identifier("y".to_string()),
-            Token::Semicolon,
-            Token::RightBrace,
-            Token::Semicolon,
-            Token::Let,
-            Token::Identifier("result".to_string()),
-            Token::Assign,
-            Token::Identifier("add".to_string()),
-            Token::LeftParen,
-            Token::Identifier("five".to_string()),
-            Token::Comma,
-            Token::Identifier("ten".to_string()),
-            Token::RightParen,
-            Token::Semicolon,
-            Token::Bang,
-            Token::Minus,
-            Token::Slash,
-            Token::Asterisk,
-            Token::Int(1),
-            Token::Semicolon,
-            Token::Int(2),
-            Token::LessThan,
-            Token::Int(3),
-            Token::GreaterThan,
-            Token::Int(4),
-            Token::Semicolon,
-            Token::If,
-            Token::LeftParen,
-            Token::Int(6),
-            Token::LessThan,
-            Token::Int(7),
-            Token::RightParen,
-            Token::LeftBrace,
-            Token::Return,
-            Token::True,
-            Token::Semicolon,
-            Token::RightBrace,
-            Token::Else,
-            Token::LeftBrace,
-            Token::Return,
-            Token::False,
-            Token::Semicolon,
-            Token::RightBrace,
-            Token::Int(8),
-            Token::EqualTo,
-            Token::Int(8),
-            Token::Semicolon,
-            Token::Int(9),
-            Token::NotEqualTo,
-            Token::Int(11),
-            Token::Semicolon,
-            Token::EndOfFile,
-        ];
-
+    fn run_lexer(input: &str, tokens: &[Token]) {
         let mut lexer = Lexer::new(input.to_string());
-
-        for (i, expected_token) in expected_tokens.iter().enumerate() {
-            assert_eq!(&lexer.next_token(), expected_token, "token {}", i);
-        }
-
-        let input = "= 5";
-        let expected_tokens = [Token::Assign, Token::Int(5)];
-        let mut lexer = Lexer::new(input.to_string());
-        for (i, expected_token) in expected_tokens.iter().enumerate() {
+        for (i, token) in tokens.iter().enumerate() {
             assert_eq!(
                 &lexer.next_token(),
-                expected_token,
+                token,
                 "input: {:?}, token: {}",
                 input,
                 i
             );
         }
+    }
+
+    #[test]
+    fn next_token() {
+        run_lexer(
+            "let five = 5;\nlet ten = 10;",
+            &[
+                Token::Let,
+                Token::Identifier("five".to_string()),
+                Token::Assign,
+                Token::Int(5),
+                Token::Semicolon,
+                Token::Let,
+                Token::Identifier("ten".to_string()),
+                Token::Assign,
+                Token::Int(10),
+                Token::Semicolon,
+            ],
+        );
+
+        run_lexer(
+            "let add = fn(x, y) { x + y };",
+            &[
+                Token::Let,
+                Token::Identifier("add".to_string()),
+                Token::Assign,
+                Token::Function,
+                Token::LeftParen,
+                Token::Identifier("x".to_string()),
+                Token::Comma,
+                Token::Identifier("y".to_string()),
+                Token::RightParen,
+                Token::LeftBrace,
+                Token::Identifier("x".to_string()),
+                Token::Plus,
+                Token::Identifier("y".to_string()),
+                Token::RightBrace,
+                Token::Semicolon,
+            ],
+        );
+
+        run_lexer(
+            "let result = add(five, ten);",
+            &[
+                Token::Let,
+                Token::Identifier("result".to_string()),
+                Token::Assign,
+                Token::Identifier("add".to_string()),
+                Token::LeftParen,
+                Token::Identifier("five".to_string()),
+                Token::Comma,
+                Token::Identifier("ten".to_string()),
+                Token::RightParen,
+                Token::Semicolon,
+            ],
+        );
+
+        run_lexer(
+            "!-/*1",
+            &[
+                Token::Bang,
+                Token::Minus,
+                Token::Slash,
+                Token::Asterisk,
+                Token::Int(1),
+            ],
+        );
+
+        run_lexer(
+            "2 < 3 > 4",
+            &[
+                Token::Int(2),
+                Token::LessThan,
+                Token::Int(3),
+                Token::GreaterThan,
+                Token::Int(4),
+            ],
+        );
+
+        run_lexer(
+            "if (6 < 7) { return true; } else { return false; }",
+            &[
+                Token::If,
+                Token::LeftParen,
+                Token::Int(6),
+                Token::LessThan,
+                Token::Int(7),
+                Token::RightParen,
+                Token::LeftBrace,
+                Token::Return,
+                Token::True,
+                Token::Semicolon,
+                Token::RightBrace,
+                Token::Else,
+                Token::LeftBrace,
+                Token::Return,
+                Token::False,
+                Token::Semicolon,
+                Token::RightBrace,
+            ],
+        );
+
+        run_lexer("7 == 8", &[Token::Int(7), Token::EqualTo, Token::Int(8)]);
+
+        run_lexer(
+            "9 != 11",
+            &[Token::Int(9), Token::NotEqualTo, Token::Int(11)],
+        );
+
+        run_lexer("= 5", &[Token::Assign, Token::Int(5)]);
     }
 }
