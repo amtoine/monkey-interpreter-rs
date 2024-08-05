@@ -9,14 +9,12 @@ pub(crate) struct Lexer {
 
 impl Lexer {
     pub(crate) fn new(input: String) -> Lexer {
-        let mut lexer = Lexer {
+        let char = input.chars().nth(0).unwrap_or('\0');
+        Lexer {
             input,
             position: 0,
-            char: '\0',
-        };
-        lexer.char = lexer.peek_char();
-
-        lexer
+            char,
+        }
     }
 
     fn peek_char(&self) -> char {
