@@ -225,5 +225,18 @@ if (6 < 7) {
         for (i, expected_token) in expected_tokens.iter().enumerate() {
             assert_eq!(&lexer.next_token(), expected_token, "token {}", i);
         }
+
+        let input = "= 5";
+        let expected_tokens = [Token::Assign, Token::Int(5)];
+        let mut lexer = Lexer::new(input.to_string());
+        for (i, expected_token) in expected_tokens.iter().enumerate() {
+            assert_eq!(
+                &lexer.next_token(),
+                expected_token,
+                "input: {:?}, token: {}",
+                input,
+                i
+            );
+        }
     }
 }
