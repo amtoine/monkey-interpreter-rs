@@ -239,5 +239,9 @@ mod tests {
         );
 
         run_lexer("= 5", &[Token::Assign, Token::Int(5)]);
+
+        // NOTE: see `rustc --explain E0277`
+        const ILLEGAL: Token = Token::Illegal;
+        run_lexer(r##"_"#$%&'.:?@[]^_`|~"##, &[ILLEGAL; 18]);
     }
 }
