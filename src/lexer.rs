@@ -128,6 +128,7 @@ mod tests {
                 i
             );
         }
+        assert_eq!(lexer.next_token(), Token::EndOfFile, "input: {:?}", input,);
     }
 
     #[test]
