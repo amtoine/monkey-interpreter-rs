@@ -6,6 +6,7 @@ pub(crate) enum Expression {
     IntegerLitteral(u32),
     Prefix(Token, Box<Self>),
     Infix(Box<Self>, Token, Box<Self>),
+    Boolean(bool),
     #[default]
     Dummy,
 }

@@ -96,6 +96,8 @@ impl Parser {
         let mut expr = match &self.curr_token {
             Token::Identifier(id) => Expression::Identifier(id.to_string()),
             Token::Int(int) => Expression::IntegerLitteral(int.parse().unwrap()),
+            Token::True => Expression::Boolean(true),
+            Token::False => Expression::Boolean(false),
             Token::Bang | Token::Minus => {
                 let op = self.curr_token.clone();
                 self.next_token();
@@ -484,6 +486,29 @@ return add(1, 2);",
             ),
         ] {
             parse(input, Program { statements });
+        }
+    }
+
+    #[test]
+    fn boolean_expression() {
+        for (input, statement) in [
+            ("true;", Statement::Expression(Expression::Boolean(true))),
+            ("false;", Statement::Expression(Expression::Boolean(false))),
+            (
+                "let foobar = true;",
+                Statement::Let("foobar".to_string(), Expression::Boolean(true)),
+            ),
+            (
+                "let barfoo = false;",
+                Statement::Let("barfoo".to_string(), Expression::Boolean(false)),
+            ),
+        ] {
+            parse(
+                input,
+                Program {
+                    statements: vec![statement],
+                },
+            );
         }
     }
 }
