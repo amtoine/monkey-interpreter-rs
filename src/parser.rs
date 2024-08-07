@@ -27,7 +27,7 @@ impl From<Token> for Precedence {
     }
 }
 
-struct Parser {
+pub(crate) struct Parser {
     lexer: Lexer,
     curr_token: Token,
     peek_token: Token,
@@ -35,7 +35,7 @@ struct Parser {
 }
 
 impl Parser {
-    fn new(lexer: Lexer) -> Self {
+    pub(crate) fn new(lexer: Lexer) -> Self {
         let mut p = Self {
             lexer,
             curr_token: Token::Illegal,
@@ -161,7 +161,7 @@ impl Parser {
         }
     }
 
-    fn parse(&mut self) -> Program {
+    pub(crate) fn parse(&mut self) -> Program {
         let mut program = Program::default();
 
         while !matches!(self.curr_token, Token::EndOfFile) {
