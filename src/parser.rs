@@ -59,9 +59,22 @@ impl Parser {
         Some(Statement::Let(name, dummy))
     }
 
+    fn parse_return_statement(&mut self) -> Option<Statement> {
+        self.next_token();
+
+        // FIXME: skipping expression until semicolon for now
+        while !matches!(self.curr_token, Token::Semicolon) {
+            self.next_token();
+        }
+
+        let dummy = Expression::Identifier(Identifier("dummy".into()));
+        Some(Statement::Return(dummy))
+    }
+
     fn parse_statement(&mut self) -> Option<Statement> {
         match self.curr_token {
             Token::Let => self.parse_let_statement(),
+            Token::Return => self.parse_return_statement(),
             _ => None,
         }
     }
@@ -141,6 +154,28 @@ let foobar = 838383;";
             } else {
                 panic!("{}-th statement should be a 'let', found {:?}", i, stmt,);
             }
+        }
+    }
+
+    #[test]
+    fn return_statements() {
+        let input = "return 5;
+return 15 * 25;
+return add(1, 2);";
+
+        let mut parser = Parser::new(Lexer::new(input.into()));
+        let program = parser.parse();
+
+        check_parser_errors(&parser, input);
+        check_program(&program, input, 3);
+
+        for (i, stmt) in program.statements.iter().enumerate() {
+            assert!(
+                matches!(stmt, Statement::Return(_)),
+                "{}-th statement should be a 'return', found {:?}",
+                i,
+                stmt
+            );
         }
     }
 }

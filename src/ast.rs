@@ -9,6 +9,7 @@ pub(crate) enum Expression {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum Statement {
     Let(Identifier, Expression),
+    Return(Expression),
 }
 
 #[derive(Default)]
