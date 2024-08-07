@@ -1,17 +1,17 @@
 #[derive(Clone, Debug, PartialEq)]
-struct Identifier(String);
+pub(crate) struct Identifier(pub String);
 
 #[derive(Clone, Debug, PartialEq)]
-enum Expression {
-    Identifier(Identifier)
+pub(crate) enum Expression {
+    Identifier(Identifier),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-enum Statement {
+pub(crate) enum Statement {
     Let(Identifier, Expression),
 }
 
 #[derive(Default)]
 pub(crate) struct Program {
-    statements: Vec<Statement>,
+    pub statements: Vec<Statement>,
 }
