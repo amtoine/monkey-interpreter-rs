@@ -133,7 +133,10 @@ mod tests {
 
     use super::Parser;
 
-    fn check_parser_errors(parser: &Parser, input: &str) {
+    fn parse(input: &str, expected: Program) {
+        let mut parser = Parser::new(Lexer::new(input.to_string()));
+        let parsed = parser.parse();
+
         assert!(
             parser.errors.is_empty(),
             "\n===\n{}\n===\nparsing generated {} errors: {:?}",
@@ -141,95 +144,61 @@ mod tests {
             parser.errors.len(),
             parser.errors,
         );
+
+        assert_eq!(parsed, expected, "\n===\n{}\n===", input);
     }
 
     #[test]
     fn let_statements() {
-        let input = "let x = 5;
+        parse(
+            "let x = 5;
 let y = 10;
-let foobar = 838383;";
-
-        let mut parser = Parser::new(Lexer::new(input.into()));
-        let program = parser.parse();
-
-        check_parser_errors(&parser, input);
-
-        assert_eq!(
-            program,
+let foobar = 838383;",
             Program {
                 statements: vec![
                     Statement::Let(Identifier("x".to_string()), Expression::default()),
                     Statement::Let(Identifier("y".to_string()), Expression::default()),
                     Statement::Let(Identifier("foobar".to_string()), Expression::default()),
-                ]
+                ],
             },
-            "\n===\n{}\n===",
-            input,
         );
     }
 
     #[test]
     fn return_statements() {
-        let input = "return 5;
+        parse(
+            "return 5;
 return 15 * 25;
-return add(1, 2);";
-
-        let mut parser = Parser::new(Lexer::new(input.into()));
-        let program = parser.parse();
-
-        check_parser_errors(&parser, input);
-
-        assert_eq!(
-            program,
+return add(1, 2);",
             Program {
                 statements: vec![
                     Statement::Return(Expression::default()),
                     Statement::Return(Expression::default()),
                     Statement::Return(Expression::default()),
-                ]
+                ],
             },
-            "\n===\n{}\n===",
-            input,
         );
     }
 
     #[test]
     fn identifier_expression() {
-        let input = "foobar;";
-
-        let mut parser = Parser::new(Lexer::new(input.into()));
-        let program = parser.parse();
-
-        check_parser_errors(&parser, input);
-
-        assert_eq!(
-            program,
+        parse(
+            "foobar;",
             Program {
                 statements: vec![Statement::Expression(Expression::Identifier(Identifier(
-                    "foobar".to_string()
-                )))]
+                    "foobar".to_string(),
+                )))],
             },
-            "\n===\n{}\n===",
-            input,
         );
     }
 
     #[test]
     fn integer_litteral_expression() {
-        let input = "5;";
-
-        let mut parser = Parser::new(Lexer::new(input.into()));
-        let program = parser.parse();
-
-        check_parser_errors(&parser, input);
-
-        assert_eq!(
-            program,
+        parse(
+            "5;",
             Program {
-                statements: vec![Statement::Expression(Expression::IntegerLitteral(5))]
+                statements: vec![Statement::Expression(Expression::IntegerLitteral(5))],
             },
-            "\n===\n{}\n===",
-            input,
         );
     }
 }
