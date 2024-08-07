@@ -72,24 +72,27 @@ impl Parser {
             return None;
         }
         self.next_token();
+        self.next_token();
 
-        // FIXME: skipping expression until semicolon for now
-        while !matches!(self.curr_token, Token::Semicolon) {
-            self.next_token();
+        if let Some(expr) = self.parse_expression(Precedence::LOWEST) {
+            Some(Statement::Let(name, expr))
+        } else {
+            self.errors
+                .push("could not parse RHS of let statement".to_string());
+            None
         }
-
-        Some(Statement::Let(name, Expression::default()))
     }
 
     fn parse_return_statement(&mut self) -> Option<Statement> {
         self.next_token();
 
-        // FIXME: skipping expression until semicolon for now
-        while !matches!(self.curr_token, Token::Semicolon) {
-            self.next_token();
+        if let Some(expr) = self.parse_expression(Precedence::LOWEST) {
+            Some(Statement::Return(expr))
+        } else {
+            self.errors
+                .push("could not parse RHS of return statement".to_string());
+            None
         }
-
-        Some(Statement::Return(Expression::default()))
     }
 
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
@@ -212,9 +215,9 @@ let y = 10;
 let foobar = 838383;",
             Program {
                 statements: vec![
-                    Statement::Let("x".to_string(), Expression::default()),
-                    Statement::Let("y".to_string(), Expression::default()),
-                    Statement::Let("foobar".to_string(), Expression::default()),
+                    Statement::Let("x".to_string(), Expression::IntegerLitteral(5)),
+                    Statement::Let("y".to_string(), Expression::IntegerLitteral(10)),
+                    Statement::Let("foobar".to_string(), Expression::IntegerLitteral(838383)),
                 ],
             },
         );
@@ -228,9 +231,17 @@ return 15 * 25;
 return add(1, 2);",
             Program {
                 statements: vec![
-                    Statement::Return(Expression::default()),
-                    Statement::Return(Expression::default()),
-                    Statement::Return(Expression::default()),
+                    Statement::Return(Expression::IntegerLitteral(5)),
+                    Statement::Return(Expression::Infix(
+                        Box::new(Expression::IntegerLitteral(15)),
+                        Token::Asterisk,
+                        Box::new(Expression::IntegerLitteral(25)),
+                    )),
+                    // NOTE: the next three statements should be a single one after the function
+                    // calls are implemented
+                    Statement::Return(Expression::Identifier("add".to_string())),
+                    Statement::Expression(Expression::IntegerLitteral(1)),
+                    Statement::Expression(Expression::IntegerLitteral(2)),
                 ],
             },
         );
