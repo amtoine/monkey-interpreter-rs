@@ -1,11 +1,8 @@
 use crate::token::Token;
 
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) struct Identifier(pub String);
-
 #[derive(Clone, Debug, PartialEq, Default)]
 pub(crate) enum Expression {
-    Identifier(Identifier),
+    Identifier(String),
     IntegerLitteral(u32),
     Prefix(Token, Box<Self>),
     Infix(Box<Self>, Token, Box<Self>),
@@ -15,7 +12,7 @@ pub(crate) enum Expression {
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum Statement {
-    Let(Identifier, Expression),
+    Let(String, Expression),
     Return(Expression),
     Expression(Expression),
 }

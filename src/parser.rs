@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Expression, Identifier, Program, Statement},
+    ast::{Expression, Program, Statement},
     lexer::Lexer,
     token::Token,
 };
@@ -62,7 +62,7 @@ impl Parser {
     fn parse_let_statement(&mut self) -> Option<Statement> {
         let name = if let Token::Identifier(name) = self.peek_token.clone() {
             self.next_token();
-            Identifier(name.to_string())
+            name.to_string()
         } else {
             self.add_token_error("identifier");
             return None;
@@ -94,7 +94,7 @@ impl Parser {
 
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
         let mut expr = match &self.curr_token {
-            Token::Identifier(id) => Expression::Identifier(Identifier(id.into())),
+            Token::Identifier(id) => Expression::Identifier(id.to_string()),
             Token::Int(int) => Expression::IntegerLitteral(int.parse().unwrap()),
             Token::Bang | Token::Minus => {
                 let op = self.curr_token.clone();
@@ -180,7 +180,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use crate::{
-        ast::{Expression, Identifier, Program, Statement},
+        ast::{Expression, Program, Statement},
         lexer::Lexer,
         token::Token,
     };
@@ -210,9 +210,9 @@ let y = 10;
 let foobar = 838383;",
             Program {
                 statements: vec![
-                    Statement::Let(Identifier("x".to_string()), Expression::default()),
-                    Statement::Let(Identifier("y".to_string()), Expression::default()),
-                    Statement::Let(Identifier("foobar".to_string()), Expression::default()),
+                    Statement::Let("x".to_string(), Expression::default()),
+                    Statement::Let("y".to_string(), Expression::default()),
+                    Statement::Let("foobar".to_string(), Expression::default()),
                 ],
             },
         );
@@ -239,9 +239,9 @@ return add(1, 2);",
         parse(
             "foobar;",
             Program {
-                statements: vec![Statement::Expression(Expression::Identifier(Identifier(
+                statements: vec![Statement::Expression(Expression::Identifier(
                     "foobar".to_string(),
-                )))],
+                ))],
             },
         );
     }
@@ -304,10 +304,10 @@ return add(1, 2);",
                 vec![Statement::Expression(Expression::Infix(
                     Box::new(Expression::Prefix(
                         Token::Minus,
-                        Box::new(Expression::Identifier(Identifier("a".to_string()))),
+                        Box::new(Expression::Identifier("a".to_string())),
                     )),
                     Token::Asterisk,
-                    Box::new(Expression::Identifier(Identifier("b".to_string()))),
+                    Box::new(Expression::Identifier("b".to_string())),
                 ))],
             ),
             (
@@ -316,7 +316,7 @@ return add(1, 2);",
                     Token::Bang,
                     Box::new(Expression::Prefix(
                         Token::Minus,
-                        Box::new(Expression::Identifier(Identifier("a".to_string()))),
+                        Box::new(Expression::Identifier("a".to_string())),
                     )),
                 ))],
             ),
@@ -324,59 +324,59 @@ return add(1, 2);",
                 "a + b + c",
                 vec![Statement::Expression(Expression::Infix(
                     Box::new(Expression::Infix(
-                        Box::new(Expression::Identifier(Identifier("a".to_string()))),
+                        Box::new(Expression::Identifier("a".to_string())),
                         Token::Plus,
-                        Box::new(Expression::Identifier(Identifier("b".to_string()))),
+                        Box::new(Expression::Identifier("b".to_string())),
                     )),
                     Token::Plus,
-                    Box::new(Expression::Identifier(Identifier("c".to_string()))),
+                    Box::new(Expression::Identifier("c".to_string())),
                 ))],
             ),
             (
                 "a + b - c",
                 vec![Statement::Expression(Expression::Infix(
                     Box::new(Expression::Infix(
-                        Box::new(Expression::Identifier(Identifier("a".to_string()))),
+                        Box::new(Expression::Identifier("a".to_string())),
                         Token::Plus,
-                        Box::new(Expression::Identifier(Identifier("b".to_string()))),
+                        Box::new(Expression::Identifier("b".to_string())),
                     )),
                     Token::Minus,
-                    Box::new(Expression::Identifier(Identifier("c".to_string()))),
+                    Box::new(Expression::Identifier("c".to_string())),
                 ))],
             ),
             (
                 "a * b * c",
                 vec![Statement::Expression(Expression::Infix(
                     Box::new(Expression::Infix(
-                        Box::new(Expression::Identifier(Identifier("a".to_string()))),
+                        Box::new(Expression::Identifier("a".to_string())),
                         Token::Asterisk,
-                        Box::new(Expression::Identifier(Identifier("b".to_string()))),
+                        Box::new(Expression::Identifier("b".to_string())),
                     )),
                     Token::Asterisk,
-                    Box::new(Expression::Identifier(Identifier("c".to_string()))),
+                    Box::new(Expression::Identifier("c".to_string())),
                 ))],
             ),
             (
                 "a * b / c",
                 vec![Statement::Expression(Expression::Infix(
                     Box::new(Expression::Infix(
-                        Box::new(Expression::Identifier(Identifier("a".to_string()))),
+                        Box::new(Expression::Identifier("a".to_string())),
                         Token::Asterisk,
-                        Box::new(Expression::Identifier(Identifier("b".to_string()))),
+                        Box::new(Expression::Identifier("b".to_string())),
                     )),
                     Token::Slash,
-                    Box::new(Expression::Identifier(Identifier("c".to_string()))),
+                    Box::new(Expression::Identifier("c".to_string())),
                 ))],
             ),
             (
                 "a + b / c",
                 vec![Statement::Expression(Expression::Infix(
-                    Box::new(Expression::Identifier(Identifier("a".to_string()))),
+                    Box::new(Expression::Identifier("a".to_string())),
                     Token::Plus,
                     Box::new(Expression::Infix(
-                        Box::new(Expression::Identifier(Identifier("b".to_string()))),
+                        Box::new(Expression::Identifier("b".to_string())),
                         Token::Slash,
-                        Box::new(Expression::Identifier(Identifier("c".to_string()))),
+                        Box::new(Expression::Identifier("c".to_string())),
                     )),
                 ))],
             ),
@@ -385,23 +385,23 @@ return add(1, 2);",
                 vec![Statement::Expression(Expression::Infix(
                     Box::new(Expression::Infix(
                         Box::new(Expression::Infix(
-                            Box::new(Expression::Identifier(Identifier("a".to_string()))),
+                            Box::new(Expression::Identifier("a".to_string())),
                             Token::Plus,
                             Box::new(Expression::Infix(
-                                Box::new(Expression::Identifier(Identifier("b".to_string()))),
+                                Box::new(Expression::Identifier("b".to_string())),
                                 Token::Asterisk,
-                                Box::new(Expression::Identifier(Identifier("c".to_string()))),
+                                Box::new(Expression::Identifier("c".to_string())),
                             )),
                         )),
                         Token::Plus,
                         Box::new(Expression::Infix(
-                            Box::new(Expression::Identifier(Identifier("d".to_string()))),
+                            Box::new(Expression::Identifier("d".to_string())),
                             Token::Slash,
-                            Box::new(Expression::Identifier(Identifier("e".to_string()))),
+                            Box::new(Expression::Identifier("e".to_string())),
                         )),
                     )),
                     Token::Minus,
-                    Box::new(Expression::Identifier(Identifier("f".to_string()))),
+                    Box::new(Expression::Identifier("f".to_string())),
                 ))],
             ),
             (
