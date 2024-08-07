@@ -147,10 +147,6 @@ impl Parser {
     fn parse_expression_statement(&mut self) -> Option<Statement> {
         let expression = self.parse_expression(Precedence::LOWEST);
 
-        if matches!(self.curr_token, Token::Semicolon) {
-            self.next_token();
-        }
-
         match expression {
             Some(expr) => Some(Statement::Expression(expr)),
             None => None,
