@@ -1,10 +1,12 @@
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Identifier(pub String);
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub(crate) enum Expression {
     Identifier(Identifier),
     IntegerLitteral(u32),
+    #[default]
+    Dummy,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -14,7 +16,7 @@ pub(crate) enum Statement {
     Expression(Expression),
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq)]
 pub(crate) struct Program {
     pub statements: Vec<Statement>,
 }

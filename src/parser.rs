@@ -65,8 +65,7 @@ impl Parser {
             self.next_token();
         }
 
-        let dummy = Expression::Identifier(Identifier("dummy".into()));
-        Some(Statement::Let(name, dummy))
+        Some(Statement::Let(name, Expression::default()))
     }
 
     fn parse_return_statement(&mut self) -> Option<Statement> {
@@ -77,8 +76,7 @@ impl Parser {
             self.next_token();
         }
 
-        let dummy = Expression::Identifier(Identifier("dummy".into()));
-        Some(Statement::Return(dummy))
+        Some(Statement::Return(Expression::default()))
     }
 
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
@@ -126,8 +124,10 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
+
     use crate::{
-        ast::{Expression, Program, Statement},
+        ast::{Expression, Identifier, Program, Statement},
         lexer::Lexer,
     };
 
@@ -136,21 +136,10 @@ mod tests {
     fn check_parser_errors(parser: &Parser, input: &str) {
         assert!(
             parser.errors.is_empty(),
-            "parsing input {:?} generated {} errors: {:?}",
+            "\n===\n{}\n===\nparsing generated {} errors: {:?}",
             input,
             parser.errors.len(),
             parser.errors,
-        );
-    }
-
-    fn check_program(program: &Program, input: &str, nb_statements: usize) {
-        assert_eq!(
-            program.statements.len(),
-            nb_statements,
-            "AST for input {:?} should contain {} statements, found {}",
-            input,
-            nb_statements,
-            program.statements.len()
         );
     }
 
@@ -159,33 +148,24 @@ mod tests {
         let input = "let x = 5;
 let y = 10;
 let foobar = 838383;";
-        let expected_identifiers = vec!["x", "y", "foobar"];
 
         let mut parser = Parser::new(Lexer::new(input.into()));
         let program = parser.parse();
 
         check_parser_errors(&parser, input);
-        check_program(&program, input, 3);
 
-        for (i, (stmt, id)) in program
-            .statements
-            .iter()
-            .zip(expected_identifiers.iter())
-            .enumerate()
-        {
-            if let Statement::Let(name, _) = stmt {
-                assert_eq!(
-                    name.0,
-                    id.to_string(),
-                    "{}-th statement should have identifier {:?}, found {:?}",
-                    i,
-                    id,
-                    name.0,
-                );
-            } else {
-                panic!("{}-th statement should be a 'let', found {:?}", i, stmt,);
-            }
-        }
+        assert_eq!(
+            program,
+            Program {
+                statements: vec![
+                    Statement::Let(Identifier("x".to_string()), Expression::default()),
+                    Statement::Let(Identifier("y".to_string()), Expression::default()),
+                    Statement::Let(Identifier("foobar".to_string()), Expression::default()),
+                ]
+            },
+            "\n===\n{}\n===",
+            input,
+        );
     }
 
     #[test]
@@ -198,16 +178,19 @@ return add(1, 2);";
         let program = parser.parse();
 
         check_parser_errors(&parser, input);
-        check_program(&program, input, 3);
 
-        for (i, stmt) in program.statements.iter().enumerate() {
-            assert!(
-                matches!(stmt, Statement::Return(_)),
-                "{}-th statement should be a 'return', found {:?}",
-                i,
-                stmt
-            );
-        }
+        assert_eq!(
+            program,
+            Program {
+                statements: vec![
+                    Statement::Return(Expression::default()),
+                    Statement::Return(Expression::default()),
+                    Statement::Return(Expression::default()),
+                ]
+            },
+            "\n===\n{}\n===",
+            input,
+        );
     }
 
     #[test]
@@ -218,22 +201,17 @@ return add(1, 2);";
         let program = parser.parse();
 
         check_parser_errors(&parser, input);
-        check_program(&program, input, 1);
 
-        let stmt = program.statements[0].clone();
-        if let Statement::Expression(expr) = stmt {
-            if let Expression::Identifier(id) = expr {
-                assert_eq!(
-                    "foobar", id.0,
-                    "expression should have identifier 'foobar', found {:?}",
-                    id.0,
-                );
-            } else {
-                panic!("expression should be an 'identifier', found {:?}", expr);
-            }
-        } else {
-            panic!("statement should be an 'expression', found {:?}", stmt);
-        }
+        assert_eq!(
+            program,
+            Program {
+                statements: vec![Statement::Expression(Expression::Identifier(Identifier(
+                    "foobar".to_string()
+                )))]
+            },
+            "\n===\n{}\n===",
+            input,
+        );
     }
 
     #[test]
@@ -244,17 +222,14 @@ return add(1, 2);";
         let program = parser.parse();
 
         check_parser_errors(&parser, input);
-        check_program(&program, input, 1);
 
-        let stmt = program.statements[0].clone();
-        if let Statement::Expression(expr) = stmt {
-            if let Expression::IntegerLitteral(i) = expr {
-                assert_eq!(5, i, "expression should have value 5, found {:?}", i,);
-            } else {
-                panic!("expression should be an 'identifier', found {:?}", expr);
-            }
-        } else {
-            panic!("statement should be an 'expression', found {:?}", stmt);
-        }
+        assert_eq!(
+            program,
+            Program {
+                statements: vec![Statement::Expression(Expression::IntegerLitteral(5))]
+            },
+            "\n===\n{}\n===",
+            input,
+        );
     }
 }
