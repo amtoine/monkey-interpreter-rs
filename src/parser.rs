@@ -1,4 +1,8 @@
-use crate::{ast::Program, lexer::Lexer, token::Token};
+use crate::{
+    ast::{Expression, Identifier, Program, Statement},
+    lexer::Lexer,
+    token::Token,
+};
 
 struct Parser {
     lexer: Lexer,
@@ -23,8 +27,45 @@ impl Parser {
         self.peek_token = self.lexer.next_token();
     }
 
-    fn parse(self) -> Program {
-        Program::default()
+    fn parse_let_statement(&mut self) -> Option<Statement> {
+        let name = if let Token::Identifier(name) = self.peek_token.clone() {
+            self.next_token();
+            Identifier(name.to_string())
+        } else {
+            return None;
+        };
+        if !matches!(self.peek_token, Token::Assign) {
+            return None;
+        }
+        self.next_token();
+
+        // FIXME: skipping expression until semicolon for now
+        while !matches!(self.curr_token, Token::Semicolon) {
+            self.next_token();
+        }
+
+        let dummy = Expression::Identifier(Identifier("dummy".into()));
+        Some(Statement::Let(name, dummy))
+    }
+
+    fn parse_statement(&mut self) -> Option<Statement> {
+        match self.curr_token {
+            Token::Let => self.parse_let_statement(),
+            _ => None,
+        }
+    }
+
+    fn parse(&mut self) -> Program {
+        let mut program = Program::default();
+
+        while !matches!(self.curr_token, Token::EndOfFile) {
+            if let Some(statement) = self.parse_statement() {
+                program.statements.push(statement);
+            }
+            self.next_token();
+        }
+
+        program
     }
 }
 
