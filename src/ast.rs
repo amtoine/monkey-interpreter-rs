@@ -15,13 +15,3 @@ enum Statement {
 pub(crate) struct Program {
     statements: Vec<Statement>,
 }
-
-impl Program {
-    fn token_literal(self) -> Option<String> {
-        if self.statements.len() > 0 {
-            Some(format!("{:?}", self.statements[0]))
-        } else {
-            None
-        }
-    }
-}
