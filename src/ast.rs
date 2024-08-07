@@ -11,7 +11,8 @@ enum Statement {
     Let(Identifier, Expression),
 }
 
-struct Program {
+#[derive(Default)]
+pub(crate) struct Program {
     statements: Vec<Statement>,
 }
 
