@@ -84,7 +84,7 @@ impl Parser {
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
         match &self.curr_token {
             Token::Identifier(id) => Some(Expression::Identifier(Identifier(id.into()))),
-            Token::Int(i) => Some(Expression::IntegerLitteral(*i)),
+            Token::Int(int) => Some(Expression::IntegerLitteral(int.parse().unwrap())),
             _ => None,
         }
     }
