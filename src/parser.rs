@@ -41,7 +41,7 @@ let y = 10;
 let foobar = 838383;";
         let expected_identifiers = vec!["x", "y", "foobar"];
 
-        let parser = Parser::new(Lexer::new(input.into()));
+        let mut parser = Parser::new(Lexer::new(input.into()));
         let program = parser.parse();
 
         assert_eq!(
