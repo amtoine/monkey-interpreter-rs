@@ -81,12 +81,15 @@ impl Parser {
         Some(Statement::Return(dummy))
     }
 
-    fn parse_expression(&mut self, precedence: Precedence) -> Expression {
-        Expression::Identifier(Identifier("dummy".into()))
+    fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
+        match &self.curr_token {
+            Token::Identifier(id) => Some(Expression::Identifier(Identifier(id.into()))),
+            _ => None,
+        }
     }
 
     fn parse_expression_statement(&mut self) -> Option<Statement> {
-        let expression = self.parse_expression(Precedence::LOWEST);
+        let expression = self.parse_expression(Precedence::LOWEST).unwrap();
 
         if matches!(self.curr_token, Token::Semicolon) {
             self.next_token();
