@@ -8,6 +8,7 @@ struct Parser {
     lexer: Lexer,
     curr_token: Token,
     peek_token: Token,
+    errors: Vec<String>,
 }
 
 impl Parser {
@@ -16,6 +17,7 @@ impl Parser {
             lexer,
             curr_token: Token::Illegal,
             peek_token: Token::Illegal,
+            errors: vec![],
         };
         p.next_token();
         p.next_token();
@@ -27,14 +29,23 @@ impl Parser {
         self.peek_token = self.lexer.next_token();
     }
 
+    fn add_token_error(&mut self, expected: &str) {
+        self.errors.push(format!(
+            "expected {} token, found {:?}",
+            expected, self.peek_token
+        ));
+    }
+
     fn parse_let_statement(&mut self) -> Option<Statement> {
         let name = if let Token::Identifier(name) = self.peek_token.clone() {
             self.next_token();
             Identifier(name.to_string())
         } else {
+            self.add_token_error("identifier");
             return None;
         };
         if !matches!(self.peek_token, Token::Assign) {
+            self.add_token_error("assignment");
             return None;
         }
         self.next_token();
@@ -84,6 +95,14 @@ let foobar = 838383;";
 
         let mut parser = Parser::new(Lexer::new(input.into()));
         let program = parser.parse();
+
+        assert!(
+            parser.errors.is_empty(),
+            "parsing input {:?} generated {} errors: {:?}",
+            input,
+            parser.errors.len(),
+            parser.errors,
+        );
 
         assert_eq!(
             program.statements.len(),
