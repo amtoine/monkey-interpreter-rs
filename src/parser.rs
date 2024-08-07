@@ -27,3 +27,53 @@ impl Parser {
         Program::default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{ast::Statement, lexer::Lexer};
+
+    use super::Parser;
+
+    #[test]
+    fn let_statements() {
+        let input = "let x = 5;
+let y = 10;
+let foobar = 838383;";
+        let expected_identifiers = vec!["x", "y", "foobar"];
+
+        let parser = Parser::new(Lexer::new(input.into()));
+        let program = parser.parse();
+
+        assert_eq!(
+            program.statements.len(),
+            3,
+            "AST for input {:?} should contain 3 statements, found {}",
+            input,
+            program.statements.len()
+        );
+
+        for (i, (stmt, id)) in program
+            .statements
+            .iter()
+            .zip(expected_identifiers.iter())
+            .enumerate()
+        {
+            assert!(
+                matches!(stmt, Statement::Let(..)),
+                "{}-th statement should be a 'let', found {:?}",
+                i,
+                stmt,
+            );
+
+            let Statement::Let(name, _) = stmt;
+            assert_eq!(
+                name.0,
+                id.to_string(),
+                "{}-th statement should have identifier {:?}, found {:?}",
+                i,
+                id,
+                name.0,
+            );
+        }
+    }
+}
