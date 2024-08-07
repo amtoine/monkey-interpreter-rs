@@ -82,9 +82,33 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ast::Statement, lexer::Lexer};
+    use crate::{
+        ast::{Program, Statement},
+        lexer::Lexer,
+    };
 
     use super::Parser;
+
+    fn check_parser_errors(parser: &Parser, input: &str) {
+        assert!(
+            parser.errors.is_empty(),
+            "parsing input {:?} generated {} errors: {:?}",
+            input,
+            parser.errors.len(),
+            parser.errors,
+        );
+    }
+
+    fn check_program(program: &Program, input: &str, nb_statements: usize) {
+        assert_eq!(
+            program.statements.len(),
+            nb_statements,
+            "AST for input {:?} should contain {} statements, found {}",
+            input,
+            nb_statements,
+            program.statements.len()
+        );
+    }
 
     #[test]
     fn let_statements() {
@@ -96,21 +120,8 @@ let foobar = 838383;";
         let mut parser = Parser::new(Lexer::new(input.into()));
         let program = parser.parse();
 
-        assert!(
-            parser.errors.is_empty(),
-            "parsing input {:?} generated {} errors: {:?}",
-            input,
-            parser.errors.len(),
-            parser.errors,
-        );
-
-        assert_eq!(
-            program.statements.len(),
-            3,
-            "AST for input {:?} should contain 3 statements, found {}",
-            input,
-            program.statements.len()
-        );
+        check_parser_errors(&parser, input);
+        check_program(&program, input, 3);
 
         for (i, (stmt, id)) in program
             .statements
@@ -118,22 +129,18 @@ let foobar = 838383;";
             .zip(expected_identifiers.iter())
             .enumerate()
         {
-            assert!(
-                matches!(stmt, Statement::Let(..)),
-                "{}-th statement should be a 'let', found {:?}",
-                i,
-                stmt,
-            );
-
-            let Statement::Let(name, _) = stmt;
-            assert_eq!(
-                name.0,
-                id.to_string(),
-                "{}-th statement should have identifier {:?}, found {:?}",
-                i,
-                id,
-                name.0,
-            );
+            if let Statement::Let(name, _) = stmt {
+                assert_eq!(
+                    name.0,
+                    id.to_string(),
+                    "{}-th statement should have identifier {:?}, found {:?}",
+                    i,
+                    id,
+                    name.0,
+                );
+            } else {
+                panic!("{}-th statement should be a 'let', found {:?}", i, stmt,);
+            }
         }
     }
 }
