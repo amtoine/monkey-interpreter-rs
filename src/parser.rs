@@ -89,13 +89,16 @@ impl Parser {
     }
 
     fn parse_expression_statement(&mut self) -> Option<Statement> {
-        let expression = self.parse_expression(Precedence::LOWEST).unwrap();
+        let expression = self.parse_expression(Precedence::LOWEST);
 
         if matches!(self.curr_token, Token::Semicolon) {
             self.next_token();
         }
 
-        Some(Statement::Expression(expression))
+        match expression {
+            Some(expr) => Some(Statement::Expression(expr)),
+            None => None,
+        }
     }
 
     fn parse_statement(&mut self) -> Option<Statement> {
@@ -208,7 +211,7 @@ return add(1, 2);";
 
     #[test]
     fn identifier_expression() {
-        let input = "foobar";
+        let input = "foobar;";
 
         let mut parser = Parser::new(Lexer::new(input.into()));
         let program = parser.parse();
