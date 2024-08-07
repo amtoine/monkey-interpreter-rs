@@ -84,6 +84,7 @@ impl Parser {
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
         match &self.curr_token {
             Token::Identifier(id) => Some(Expression::Identifier(Identifier(id.into()))),
+            Token::Int(i) => Some(Expression::IntegerLitteral(*i)),
             _ => None,
         }
     }
@@ -227,6 +228,28 @@ return add(1, 2);";
                     "expression should have identifier 'foobar', found {:?}",
                     id.0,
                 );
+            } else {
+                panic!("expression should be an 'identifier', found {:?}", expr);
+            }
+        } else {
+            panic!("statement should be an 'expression', found {:?}", stmt);
+        }
+    }
+
+    #[test]
+    fn integer_litteral_expression() {
+        let input = "5;";
+
+        let mut parser = Parser::new(Lexer::new(input.into()));
+        let program = parser.parse();
+
+        check_parser_errors(&parser, input);
+        check_program(&program, input, 1);
+
+        let stmt = program.statements[0].clone();
+        if let Statement::Expression(expr) = stmt {
+            if let Expression::IntegerLitteral(i) = expr {
+                assert_eq!(5, i, "expression should have value 5, found {:?}", i,);
             } else {
                 panic!("expression should be an 'identifier', found {:?}", expr);
             }

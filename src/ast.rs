@@ -4,6 +4,7 @@ pub(crate) struct Identifier(pub String);
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum Expression {
     Identifier(Identifier),
+    IntegerLitteral(u32),
 }
 
 #[derive(Clone, Debug, PartialEq)]
