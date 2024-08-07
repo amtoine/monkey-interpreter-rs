@@ -7,7 +7,8 @@ pub(crate) struct Identifier(pub String);
 pub(crate) enum Expression {
     Identifier(Identifier),
     IntegerLitteral(u32),
-    Prefix(Token, Box<Expression>),
+    Prefix(Token, Box<Self>),
+    Infix(Box<Self>, Token, Box<Self>),
     #[default]
     Dummy,
 }
