@@ -60,18 +60,20 @@ impl Parser {
     }
 
     fn parse_let_statement(&mut self) -> Option<Statement> {
-        let name = if let Token::Identifier(name) = self.peek_token.clone() {
-            self.next_token();
+        self.next_token();
+        let name = if let Token::Identifier(name) = self.curr_token.clone() {
             name.to_string()
         } else {
             self.add_token_error("identifier");
             return None;
         };
-        if !matches!(self.peek_token, Token::Assign) {
+
+        self.next_token();
+        if !matches!(self.curr_token, Token::Assign) {
             self.add_token_error("assignment");
             return None;
         }
-        self.next_token();
+
         self.next_token();
 
         if let Some(expr) = self.parse_expression(Precedence::LOWEST) {
@@ -150,9 +152,7 @@ impl Parser {
     }
 
     fn parse_expression_statement(&mut self) -> Option<Statement> {
-        let expression = self.parse_expression(Precedence::LOWEST);
-
-        match expression {
+        match self.parse_expression(Precedence::LOWEST) {
             Some(expr) => Some(Statement::Expression(expr)),
             None => None,
         }
