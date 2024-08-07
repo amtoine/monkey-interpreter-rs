@@ -4,6 +4,7 @@ use crate::{
     token::Token,
 };
 
+#[derive(PartialEq, PartialOrd)]
 enum Precedence {
     LOWEST,
     EQUALS,
@@ -12,6 +13,18 @@ enum Precedence {
     PRODUCT,
     PREFIX,
     CALL,
+}
+
+impl From<Token> for Precedence {
+    fn from(token: Token) -> Self {
+        match token {
+            Token::EqualTo | Token::NotEqualTo => Self::EQUALS,
+            Token::LessThan | Token::GreaterThan => Self::LESSGREATER,
+            Token::Plus | Token::Minus => Self::SUM,
+            Token::Slash | Token::Asterisk => Self::PRODUCT,
+            _ => Self::LOWEST,
+        }
+    }
 }
 
 struct Parser {
@@ -80,22 +93,56 @@ impl Parser {
     }
 
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
-        match &self.curr_token {
-            Token::Identifier(id) => Some(Expression::Identifier(Identifier(id.into()))),
-            Token::Int(int) => Some(Expression::IntegerLitteral(int.parse().unwrap())),
+        let expr = match &self.curr_token {
+            Token::Identifier(id) => Expression::Identifier(Identifier(id.into())),
+            Token::Int(int) => Expression::IntegerLitteral(int.parse().unwrap()),
             Token::Bang | Token::Minus => {
                 let op = self.curr_token.clone();
                 self.next_token();
                 if let Some(rhs) = self.parse_expression(Precedence::PREFIX) {
-                    Some(Expression::Prefix(op, Box::new(rhs)))
+                    Expression::Prefix(op, Box::new(rhs))
                 } else {
                     self.errors
                         .push("could not parse prefix expression".to_string());
-                    None
+                    return None;
                 }
             }
-            _ => None,
+            _ => return None,
+        };
+
+        while !matches!(self.peek_token, Token::Semicolon)
+            && precedence < self.peek_token.clone().into()
+        {
+            return match &self.peek_token {
+                Token::Plus
+                | Token::Minus
+                | Token::Slash
+                | Token::Asterisk
+                | Token::EqualTo
+                | Token::NotEqualTo
+                | Token::LessThan
+                | Token::GreaterThan => {
+                    self.next_token();
+
+                    let lhs = expr;
+                    let op = self.curr_token.clone();
+                    let precedence = self.curr_token.clone().into();
+
+                    self.next_token();
+
+                    if let Some(rhs) = self.parse_expression(precedence) {
+                        Some(Expression::Infix(Box::new(lhs), op, Box::new(rhs)))
+                    } else {
+                        self.errors
+                            .push("could not parse infix expression".to_string());
+                        None
+                    }
+                }
+                _ => None,
+            };
         }
+
+        Some(expr)
     }
 
     fn parse_expression_statement(&mut self) -> Option<Statement> {
@@ -223,6 +270,31 @@ return add(1, 2);",
                     statements: vec![Statement::Expression(Expression::Prefix(
                         op,
                         Box::new(Expression::IntegerLitteral(value)),
+                    ))],
+                },
+            );
+        }
+    }
+
+    #[test]
+    fn infix_expression() {
+        for (input, lhs, op, rhs) in [
+            ("5 + 5;", 5, Token::Plus, 5),
+            ("5 - 5;", 5, Token::Minus, 5),
+            ("5 * 5;", 5, Token::Asterisk, 5),
+            ("5 / 5;", 5, Token::Slash, 5),
+            ("5 > 5;", 5, Token::GreaterThan, 5),
+            ("5 < 5;", 5, Token::LessThan, 5),
+            ("5 == 5;", 5, Token::EqualTo, 5),
+            ("5 != 5;", 5, Token::NotEqualTo, 5),
+        ] {
+            parse(
+                input,
+                Program {
+                    statements: vec![Statement::Expression(Expression::Infix(
+                        Box::new(Expression::IntegerLitteral(lhs)),
+                        op,
+                        Box::new(Expression::IntegerLitteral(rhs)),
                     ))],
                 },
             );
