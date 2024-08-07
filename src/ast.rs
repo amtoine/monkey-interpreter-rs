@@ -1,3 +1,5 @@
+use crate::token::Token;
+
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Identifier(pub String);
 
@@ -5,6 +7,7 @@ pub(crate) struct Identifier(pub String);
 pub(crate) enum Expression {
     Identifier(Identifier),
     IntegerLitteral(u32),
+    Prefix(Token, Box<Expression>),
     #[default]
     Dummy,
 }

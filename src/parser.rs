@@ -83,6 +83,17 @@ impl Parser {
         match &self.curr_token {
             Token::Identifier(id) => Some(Expression::Identifier(Identifier(id.into()))),
             Token::Int(int) => Some(Expression::IntegerLitteral(int.parse().unwrap())),
+            Token::Bang | Token::Minus => {
+                let op = self.curr_token.clone();
+                self.next_token();
+                if let Some(rhs) = self.parse_expression(Precedence::PREFIX) {
+                    Some(Expression::Prefix(op, Box::new(rhs)))
+                } else {
+                    self.errors
+                        .push("could not parse prefix expression".to_string());
+                    None
+                }
+            }
             _ => None,
         }
     }
@@ -129,6 +140,7 @@ mod tests {
     use crate::{
         ast::{Expression, Identifier, Program, Statement},
         lexer::Lexer,
+        token::Token,
     };
 
     use super::Parser;
@@ -200,5 +212,20 @@ return add(1, 2);",
                 statements: vec![Statement::Expression(Expression::IntegerLitteral(5))],
             },
         );
+    }
+
+    #[test]
+    fn prefix_expression() {
+        for (input, op, value) in [("!5;", Token::Bang, 5), ("-15", Token::Minus, 15)] {
+            parse(
+                input,
+                Program {
+                    statements: vec![Statement::Expression(Expression::Prefix(
+                        op,
+                        Box::new(Expression::IntegerLitteral(value)),
+                    ))],
+                },
+            );
+        }
     }
 }
