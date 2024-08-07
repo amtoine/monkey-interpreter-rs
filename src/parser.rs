@@ -93,7 +93,7 @@ impl Parser {
     }
 
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
-        let expr = match &self.curr_token {
+        let mut expr = match &self.curr_token {
             Token::Identifier(id) => Expression::Identifier(Identifier(id.into())),
             Token::Int(int) => Expression::IntegerLitteral(int.parse().unwrap()),
             Token::Bang | Token::Minus => {
@@ -113,7 +113,7 @@ impl Parser {
         while !matches!(self.peek_token, Token::Semicolon)
             && precedence < self.peek_token.clone().into()
         {
-            return match &self.peek_token {
+            expr = match &self.peek_token {
                 Token::Plus
                 | Token::Minus
                 | Token::Slash
@@ -124,21 +124,20 @@ impl Parser {
                 | Token::GreaterThan => {
                     self.next_token();
 
-                    let lhs = expr;
                     let op = self.curr_token.clone();
                     let precedence = self.curr_token.clone().into();
 
                     self.next_token();
 
                     if let Some(rhs) = self.parse_expression(precedence) {
-                        Some(Expression::Infix(Box::new(lhs), op, Box::new(rhs)))
+                        Expression::Infix(Box::new(expr.clone()), op, Box::new(rhs))
                     } else {
                         self.errors
                             .push("could not parse infix expression".to_string());
-                        None
+                        return Some(expr)
                     }
                 }
-                _ => None,
+                _ => return Some(expr),
             };
         }
 
