@@ -10,6 +10,7 @@ pub(crate) enum Expression {
 pub(crate) enum Statement {
     Let(Identifier, Expression),
     Return(Expression),
+    Expression(Expression),
 }
 
 #[derive(Default)]

@@ -4,6 +4,16 @@ use crate::{
     token::Token,
 };
 
+enum Precedence {
+    LOWEST,
+    EQUALS,
+    LESSGREATER,
+    SUM,
+    PRODUCT,
+    PREFIX,
+    CALL,
+}
+
 struct Parser {
     lexer: Lexer,
     curr_token: Token,
@@ -71,11 +81,25 @@ impl Parser {
         Some(Statement::Return(dummy))
     }
 
+    fn parse_expression(&mut self, precedence: Precedence) -> Expression {
+        Expression::Identifier(Identifier("dummy".into()))
+    }
+
+    fn parse_expression_statement(&mut self) -> Option<Statement> {
+        let expression = self.parse_expression(Precedence::LOWEST);
+
+        if matches!(self.curr_token, Token::Semicolon) {
+            self.next_token();
+        }
+
+        Some(Statement::Expression(expression))
+    }
+
     fn parse_statement(&mut self) -> Option<Statement> {
         match self.curr_token {
             Token::Let => self.parse_let_statement(),
             Token::Return => self.parse_return_statement(),
-            _ => None,
+            _ => self.parse_expression_statement(),
         }
     }
 
@@ -96,7 +120,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use crate::{
-        ast::{Program, Statement},
+        ast::{Expression, Program, Statement},
         lexer::Lexer,
     };
 
@@ -176,6 +200,32 @@ return add(1, 2);";
                 i,
                 stmt
             );
+        }
+    }
+
+    #[test]
+    fn identifier_expression() {
+        let input = "foobar";
+
+        let mut parser = Parser::new(Lexer::new(input.into()));
+        let program = parser.parse();
+
+        check_parser_errors(&parser, input);
+        check_program(&program, input, 1);
+
+        let stmt = program.statements[0].clone();
+        if let Statement::Expression(expr) = stmt {
+            if let Expression::Identifier(id) = expr {
+                assert_eq!(
+                    "foobar", id.0,
+                    "expression should have identifier 'foobar', found {:?}",
+                    id.0,
+                );
+            } else {
+                panic!("expression should be an 'identifier', found {:?}", expr);
+            }
+        } else {
+            panic!("statement should be an 'expression', found {:?}", stmt);
         }
     }
 }
