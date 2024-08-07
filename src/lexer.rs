@@ -34,23 +34,20 @@ impl Lexer {
 
     fn read_identifier(&mut self) -> String {
         let identifier_start_position = self.position;
-        while self.char.is_ascii_alphabetic() {
+        while self.char.is_ascii_alphanumeric() || self.char == '_' {
             self.read_char();
         }
 
         self.input[identifier_start_position..self.position].to_string()
     }
 
-    fn read_integer(&mut self) -> u32 {
+    fn read_integer(&mut self) -> String {
         let value_start_position = self.position;
-        while self.char.is_ascii_digit() {
+        while self.char.is_ascii_alphanumeric() || self.char == '_' {
             self.read_char();
         }
 
-        self.input[value_start_position..self.position]
-            .to_string()
-            .parse()
-            .unwrap()
+        self.input[value_start_position..self.position].to_string()
     }
 
     pub(crate) fn next_token(&mut self) -> Token {
@@ -139,13 +136,23 @@ mod tests {
                 Token::Let,
                 Token::Identifier("five".to_string()),
                 Token::Assign,
-                Token::Int(5),
+                Token::Int("5".into()),
                 Token::Semicolon,
                 Token::Let,
                 Token::Identifier("ten".to_string()),
                 Token::Assign,
-                Token::Int(10),
+                Token::Int("10".to_string()),
                 Token::Semicolon,
+            ],
+        );
+
+        run_lexer(
+            "let foo_2_bar = 1234_u16",
+            &[
+                Token::Let,
+                Token::Identifier("foo_2_bar".to_string()),
+                Token::Assign,
+                Token::Int("1234_u16".to_string()),
             ],
         );
 
@@ -193,18 +200,18 @@ mod tests {
                 Token::Minus,
                 Token::Slash,
                 Token::Asterisk,
-                Token::Int(1),
+                Token::Int("1".to_string()),
             ],
         );
 
         run_lexer(
             "2 < 3 > 4",
             &[
-                Token::Int(2),
+                Token::Int("2".to_string()),
                 Token::LessThan,
-                Token::Int(3),
+                Token::Int("3".to_string()),
                 Token::GreaterThan,
-                Token::Int(4),
+                Token::Int("4".to_string()),
             ],
         );
 
@@ -213,9 +220,9 @@ mod tests {
             &[
                 Token::If,
                 Token::LeftParen,
-                Token::Int(6),
+                Token::Int("6".to_string()),
                 Token::LessThan,
-                Token::Int(7),
+                Token::Int("7".to_string()),
                 Token::RightParen,
                 Token::LeftBrace,
                 Token::Return,
@@ -231,14 +238,25 @@ mod tests {
             ],
         );
 
-        run_lexer("7 == 8", &[Token::Int(7), Token::EqualTo, Token::Int(8)]);
+        run_lexer(
+            "7 == 8",
+            &[
+                Token::Int("7".to_string()),
+                Token::EqualTo,
+                Token::Int("8".to_string()),
+            ],
+        );
 
         run_lexer(
             "9 != 11",
-            &[Token::Int(9), Token::NotEqualTo, Token::Int(11)],
+            &[
+                Token::Int("9".to_string()),
+                Token::NotEqualTo,
+                Token::Int("11".to_string()),
+            ],
         );
 
-        run_lexer("= 5", &[Token::Assign, Token::Int(5)]);
+        run_lexer("= 5", &[Token::Assign, Token::Int("5".to_string())]);
 
         // NOTE: see `rustc --explain E0277`
         const ILLEGAL: Token = Token::Illegal;

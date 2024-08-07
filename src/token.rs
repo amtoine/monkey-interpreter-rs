@@ -3,7 +3,7 @@ pub(crate) enum Token {
     Illegal,
     EndOfFile,
     Identifier(String),
-    Int(u32),
+    Int(String),
     Assign,
     Plus,
     Comma,
