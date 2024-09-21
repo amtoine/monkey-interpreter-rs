@@ -207,68 +207,6 @@ mod tests {
         assert_eq!(parsed, expected, "\n===\n{}\n===", input);
     }
 
-    #[test]
-    fn let_statements() {
-        parse(
-            "let x = 5;
-let y = 10;
-let foobar = 838383;",
-            Program {
-                statements: vec![
-                    Statement::Let("x".to_string(), Expression::IntegerLitteral(5)),
-                    Statement::Let("y".to_string(), Expression::IntegerLitteral(10)),
-                    Statement::Let("foobar".to_string(), Expression::IntegerLitteral(838383)),
-                ],
-            },
-        );
-    }
-
-    #[test]
-    fn return_statements() {
-        parse(
-            "return 5;
-return 15 * 25;
-return add(1, 2);",
-            Program {
-                statements: vec![
-                    Statement::Return(Expression::IntegerLitteral(5)),
-                    Statement::Return(Expression::Infix(
-                        Box::new(Expression::IntegerLitteral(15)),
-                        Token::Asterisk,
-                        Box::new(Expression::IntegerLitteral(25)),
-                    )),
-                    // NOTE: the next three statements should be a single one after the function
-                    // calls are implemented
-                    Statement::Return(Expression::Identifier("add".to_string())),
-                    Statement::Expression(Expression::IntegerLitteral(1)),
-                    Statement::Expression(Expression::IntegerLitteral(2)),
-                ],
-            },
-        );
-    }
-
-    #[test]
-    fn identifier_expression() {
-        parse(
-            "foobar;",
-            Program {
-                statements: vec![Statement::Expression(Expression::Identifier(
-                    "foobar".to_string(),
-                ))],
-            },
-        );
-    }
-
-    #[test]
-    fn integer_litteral_expression() {
-        parse(
-            "5;",
-            Program {
-                statements: vec![Statement::Expression(Expression::IntegerLitteral(5))],
-            },
-        );
-    }
-
     /// builds an [`Expression::IntegerLitteral`]
     macro_rules! int {
         ($val:expr) => {
@@ -296,6 +234,62 @@ return add(1, 2);",
         ($lhs:expr, $op:expr, $rhs:expr $(,)*) => {
             Expression::Infix(Box::new($lhs), $op, Box::new($rhs))
         };
+    }
+
+    #[test]
+    fn let_statements() {
+        parse(
+            "let x = 5;
+let y = 10;
+let foobar = 838383;",
+            Program {
+                statements: vec![
+                    Statement::Let("x".to_string(), int!(5)),
+                    Statement::Let("y".to_string(), int!(10)),
+                    Statement::Let("foobar".to_string(), int!(838383)),
+                ],
+            },
+        );
+    }
+
+    #[test]
+    fn return_statements() {
+        parse(
+            "return 5;
+return 15 * 25;
+return add(1, 2);",
+            Program {
+                statements: vec![
+                    Statement::Return(int!(5)),
+                    Statement::Return(infix!(int!(15), Token::Asterisk, int!(25),)),
+                    // NOTE: the next three statements should be a single one after the function
+                    // calls are implemented
+                    Statement::Return(id!("add")),
+                    Statement::Expression(int!(1)),
+                    Statement::Expression(int!(2)),
+                ],
+            },
+        );
+    }
+
+    #[test]
+    fn identifier_expression() {
+        parse(
+            "foobar;",
+            Program {
+                statements: vec![Statement::Expression(id!("foobar"))],
+            },
+        );
+    }
+
+    #[test]
+    fn integer_litteral_expression() {
+        parse(
+            "5;",
+            Program {
+                statements: vec![Statement::Expression(int!(5))],
+            },
+        );
     }
 
     #[test]
