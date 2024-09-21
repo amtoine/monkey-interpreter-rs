@@ -269,16 +269,42 @@ return add(1, 2);",
         );
     }
 
+    /// builds an [`Expression::IntegerLitteral`]
+    macro_rules! int {
+        ($val:expr) => {
+            Expression::IntegerLitteral($val)
+        };
+    }
+    /// builds an [`Expression::Identifier`] and takes care of the "string" conversion
+    macro_rules! id {
+        ($id:expr) => {
+            Expression::Identifier($id.to_string())
+        };
+    }
+    /// build an [`Expression::Prefix`] and takes care of the "boxing" of the right expression
+    ///
+    /// > supports trailing comma in case the macro is used on multiple lines
+    macro_rules! prefix {
+        ($op:expr, $expr:expr $(,)*) => {
+            Expression::Prefix($op, Box::new($expr))
+        };
+    }
+    /// build an [`Expression::Infix`] and takes care of the "boxing" of the expressions
+    ///
+    /// > supports trailing comma in case the macro is used on multiple lines
+    macro_rules! infix {
+        ($lhs:expr, $op:expr, $rhs:expr $(,)*) => {
+            Expression::Infix(Box::new($lhs), $op, Box::new($rhs))
+        };
+    }
+
     #[test]
     fn prefix_expression() {
         for (input, op, value) in [("!5;", Token::Bang, 5), ("-15", Token::Minus, 15)] {
             parse(
                 input,
                 Program {
-                    statements: vec![Statement::Expression(Expression::Prefix(
-                        op,
-                        Box::new(Expression::IntegerLitteral(value)),
-                    ))],
+                    statements: vec![Statement::Expression(prefix!(op, int!(value)))],
                 },
             );
         }
@@ -299,11 +325,7 @@ return add(1, 2);",
             parse(
                 input,
                 Program {
-                    statements: vec![Statement::Expression(Expression::Infix(
-                        Box::new(Expression::IntegerLitteral(lhs)),
-                        op,
-                        Box::new(Expression::IntegerLitteral(rhs)),
-                    ))],
+                    statements: vec![Statement::Expression(infix!(int!(lhs), op, int!(rhs)))],
                 },
             );
         }
@@ -314,185 +336,116 @@ return add(1, 2);",
         for (input, statements) in [
             (
                 "-a * b",
-                vec![Statement::Expression(Expression::Infix(
-                    Box::new(Expression::Prefix(
-                        Token::Minus,
-                        Box::new(Expression::Identifier("a".to_string())),
-                    )),
+                vec![Statement::Expression(infix!(
+                    prefix!(Token::Minus, id!("a")),
                     Token::Asterisk,
-                    Box::new(Expression::Identifier("b".to_string())),
+                    id!("b"),
                 ))],
             ),
             (
                 "!-a",
-                vec![Statement::Expression(Expression::Prefix(
+                vec![Statement::Expression(prefix!(
                     Token::Bang,
-                    Box::new(Expression::Prefix(
-                        Token::Minus,
-                        Box::new(Expression::Identifier("a".to_string())),
-                    )),
+                    prefix!(Token::Minus, id!("a"))
                 ))],
             ),
             (
                 "a + b + c",
-                vec![Statement::Expression(Expression::Infix(
-                    Box::new(Expression::Infix(
-                        Box::new(Expression::Identifier("a".to_string())),
-                        Token::Plus,
-                        Box::new(Expression::Identifier("b".to_string())),
-                    )),
+                vec![Statement::Expression(infix!(
+                    infix!(id!("a"), Token::Plus, id!("b")),
                     Token::Plus,
-                    Box::new(Expression::Identifier("c".to_string())),
+                    id!("c"),
                 ))],
             ),
             (
                 "a + b - c",
-                vec![Statement::Expression(Expression::Infix(
-                    Box::new(Expression::Infix(
-                        Box::new(Expression::Identifier("a".to_string())),
-                        Token::Plus,
-                        Box::new(Expression::Identifier("b".to_string())),
-                    )),
+                vec![Statement::Expression(infix!(
+                    infix!(id!("a"), Token::Plus, id!("b")),
                     Token::Minus,
-                    Box::new(Expression::Identifier("c".to_string())),
+                    id!("c"),
                 ))],
             ),
             (
                 "a * b * c",
-                vec![Statement::Expression(Expression::Infix(
-                    Box::new(Expression::Infix(
-                        Box::new(Expression::Identifier("a".to_string())),
-                        Token::Asterisk,
-                        Box::new(Expression::Identifier("b".to_string())),
-                    )),
+                vec![Statement::Expression(infix!(
+                    infix!(id!("a"), Token::Asterisk, id!("b")),
                     Token::Asterisk,
-                    Box::new(Expression::Identifier("c".to_string())),
+                    id!("c"),
                 ))],
             ),
             (
                 "a * b / c",
-                vec![Statement::Expression(Expression::Infix(
-                    Box::new(Expression::Infix(
-                        Box::new(Expression::Identifier("a".to_string())),
-                        Token::Asterisk,
-                        Box::new(Expression::Identifier("b".to_string())),
-                    )),
+                vec![Statement::Expression(infix!(
+                    infix!(id!("a"), Token::Asterisk, id!("b")),
                     Token::Slash,
-                    Box::new(Expression::Identifier("c".to_string())),
+                    id!("c"),
                 ))],
             ),
             (
                 "a + b / c",
-                vec![Statement::Expression(Expression::Infix(
-                    Box::new(Expression::Identifier("a".to_string())),
+                vec![Statement::Expression(infix!(
+                    id!("a"),
                     Token::Plus,
-                    Box::new(Expression::Infix(
-                        Box::new(Expression::Identifier("b".to_string())),
-                        Token::Slash,
-                        Box::new(Expression::Identifier("c".to_string())),
-                    )),
+                    infix!(id!("b"), Token::Slash, id!("c"))
                 ))],
             ),
             (
                 "a + b * c + d / e - f",
-                vec![Statement::Expression(Expression::Infix(
-                    Box::new(Expression::Infix(
-                        Box::new(Expression::Infix(
-                            Box::new(Expression::Identifier("a".to_string())),
+                vec![Statement::Expression(infix!(
+                    infix!(
+                        infix!(
+                            id!("a"),
                             Token::Plus,
-                            Box::new(Expression::Infix(
-                                Box::new(Expression::Identifier("b".to_string())),
-                                Token::Asterisk,
-                                Box::new(Expression::Identifier("c".to_string())),
-                            )),
-                        )),
+                            infix!(id!("b"), Token::Asterisk, id!("c")),
+                        ),
                         Token::Plus,
-                        Box::new(Expression::Infix(
-                            Box::new(Expression::Identifier("d".to_string())),
-                            Token::Slash,
-                            Box::new(Expression::Identifier("e".to_string())),
-                        )),
-                    )),
+                        infix!(id!("d"), Token::Slash, id!("e")),
+                    ),
                     Token::Minus,
-                    Box::new(Expression::Identifier("f".to_string())),
+                    id!("f"),
                 ))],
             ),
             (
                 "3 + 4; -5 * 5",
                 vec![
-                    Statement::Expression(Expression::Infix(
-                        Box::new(Expression::IntegerLitteral(3)),
-                        Token::Plus,
-                        Box::new(Expression::IntegerLitteral(4)),
-                    )),
-                    Statement::Expression(Expression::Infix(
-                        Box::new(Expression::Prefix(
-                            Token::Minus,
-                            Box::new(Expression::IntegerLitteral(5)),
-                        )),
+                    Statement::Expression(infix!(int!(3), Token::Plus, int!(4))),
+                    Statement::Expression(infix!(
+                        prefix!(Token::Minus, int!(5)),
                         Token::Asterisk,
-                        Box::new(Expression::IntegerLitteral(5)),
+                        int!(5),
                     )),
                 ],
             ),
             (
                 "5 > 4 == 3 < 4",
-                vec![Statement::Expression(Expression::Infix(
-                    Box::new(Expression::Infix(
-                        Box::new(Expression::IntegerLitteral(5)),
-                        Token::GreaterThan,
-                        Box::new(Expression::IntegerLitteral(4)),
-                    )),
+                vec![Statement::Expression(infix!(
+                    infix!(int!(5), Token::GreaterThan, int!(4)),
                     Token::EqualTo,
-                    Box::new(Expression::Infix(
-                        Box::new(Expression::IntegerLitteral(3)),
-                        Token::LessThan,
-                        Box::new(Expression::IntegerLitteral(4)),
-                    )),
+                    infix!(int!(3), Token::LessThan, int!(4)),
                 ))],
             ),
             (
                 "5 < 4 != 3 > 4",
-                vec![Statement::Expression(Expression::Infix(
-                    Box::new(Expression::Infix(
-                        Box::new(Expression::IntegerLitteral(5)),
-                        Token::LessThan,
-                        Box::new(Expression::IntegerLitteral(4)),
-                    )),
+                vec![Statement::Expression(infix!(
+                    infix!(int!(5), Token::LessThan, int!(4)),
                     Token::NotEqualTo,
-                    Box::new(Expression::Infix(
-                        Box::new(Expression::IntegerLitteral(3)),
-                        Token::GreaterThan,
-                        Box::new(Expression::IntegerLitteral(4)),
-                    )),
+                    infix!(int!(3), Token::GreaterThan, int!(4)),
                 ))],
             ),
             (
                 "3 + 4 * 5 == 3 * 1 + 4 * 5",
-                vec![Statement::Expression(Expression::Infix(
-                    Box::new(Expression::Infix(
-                        Box::new(Expression::IntegerLitteral(3)),
+                vec![Statement::Expression(infix!(
+                    infix!(
+                        int!(3),
                         Token::Plus,
-                        Box::new(Expression::Infix(
-                            Box::new(Expression::IntegerLitteral(4)),
-                            Token::Asterisk,
-                            Box::new(Expression::IntegerLitteral(5)),
-                        )),
-                    )),
+                        infix!(int!(4), Token::Asterisk, int!(5)),
+                    ),
                     Token::EqualTo,
-                    Box::new(Expression::Infix(
-                        Box::new(Expression::Infix(
-                            Box::new(Expression::IntegerLitteral(3)),
-                            Token::Asterisk,
-                            Box::new(Expression::IntegerLitteral(1)),
-                        )),
+                    infix!(
+                        infix!(int!(3), Token::Asterisk, int!(1)),
                         Token::Plus,
-                        Box::new(Expression::Infix(
-                            Box::new(Expression::IntegerLitteral(4)),
-                            Token::Asterisk,
-                            Box::new(Expression::IntegerLitteral(5)),
-                        )),
-                    )),
+                        infix!(int!(4), Token::Asterisk, int!(5)),
+                    ),
                 ))],
             ),
         ] {
