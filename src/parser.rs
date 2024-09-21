@@ -146,7 +146,11 @@ impl Parser {
                     return None;
                 }
             }
-            _ => return None,
+            Token::Semicolon => return None,
+            t => {
+                self.errors.push(format!("no rule for parsing {:?}", t));
+                return None;
+            }
         };
 
         while !matches!(self.peek_token, Token::Semicolon)
