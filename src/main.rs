@@ -1,6 +1,8 @@
 use std::io::Write;
 
+mod ast;
 mod lexer;
+mod parser;
 mod token;
 
 fn main() {
@@ -11,12 +13,12 @@ fn main() {
         let mut input = String::new();
         std::io::stdin().read_line(&mut input).unwrap();
 
-        let mut lexer = lexer::Lexer::new(input);
-        loop {
-            match lexer.next_token() {
-                token::Token::EndOfFile => break,
-                token => println!("{:?}", token),
-            }
+        let mut parser = parser::Parser::new(lexer::Lexer::new(input.to_string()));
+        let ast = parser.parse();
+        println!("{:#?}", ast);
+
+        if !parser.errors.is_empty() {
+            eprintln!("ERRORS: {:#?}", parser.errors);
         }
     }
 }
