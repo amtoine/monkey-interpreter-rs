@@ -9,6 +9,7 @@ pub(crate) enum Expression {
     Boolean(bool),
     If(Box<Self>, Vec<Statement>, Vec<Statement>),
     Function(Vec<String>, Vec<Statement>),
+    Call(Box<Expression>, Vec<Box<Expression>>),
     #[default]
     Dummy,
 }

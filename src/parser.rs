@@ -22,6 +22,7 @@ impl From<Token> for Precedence {
             Token::LessThan | Token::GreaterThan => Self::LESSGREATER,
             Token::Plus | Token::Minus => Self::SUM,
             Token::Slash | Token::Asterisk => Self::PRODUCT,
+            Token::LeftParen => Self::CALL,
             _ => Self::LOWEST,
         }
     }
@@ -255,6 +256,57 @@ impl Parser {
         Some(Expression::Function(parameters, body))
     }
 
+    fn parse_call_arguments(&mut self) -> Vec<Expression> {
+        self.next_token();
+        if matches!(self.curr_token, Token::RightParen) {
+            return vec![];
+        }
+
+        self.next_token();
+        let mut arguments = if let Some(expr) = self.parse_expression(Precedence::LOWEST) {
+            vec![expr]
+        } else {
+            self.errors
+                .push("could not parse expression in call expression".to_string());
+            return vec![];
+        };
+
+        while matches!(self.peek_token, Token::Comma) {
+            self.next_token();
+            self.next_token();
+            if let Some(expr) = self.parse_expression(Precedence::LOWEST) {
+                arguments.push(expr)
+            } else {
+                self.errors
+                    .push("could not parse expression in call expression".to_string());
+                return vec![];
+            }
+        }
+
+        self.next_token();
+        if !matches!(self.curr_token, Token::RightParen) {
+            self.errors.push(format!(
+                "missing right brace in call expression, found {:?}",
+                self.curr_token,
+            ));
+            return vec![];
+        }
+
+        arguments
+    }
+
+    fn parse_call_expression(&mut self, expr: Expression) -> Option<Expression> {
+        let arguments = self.parse_call_arguments();
+
+        Some(Expression::Call(
+            Box::new(expr),
+            arguments
+                .into_iter()
+                .map(|a| Box::new(a))
+                .collect::<Vec<_>>(),
+        ))
+    }
+
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
         let mut expr = match &self.curr_token {
             Token::Identifier(id) => Expression::Identifier(id.to_string()),
@@ -330,6 +382,15 @@ impl Parser {
                     } else {
                         self.errors
                             .push("could not parse infix expression".to_string());
+                        return Some(expr);
+                    }
+                }
+                Token::LeftParen => {
+                    if let Some(call_expr) = self.parse_call_expression(expr.clone()) {
+                        call_expr
+                    } else {
+                        self.errors
+                            .push("could not parse call expression".to_string());
                         return Some(expr);
                     }
                 }
@@ -449,6 +510,16 @@ mod tests {
             Expression::Function(
                 vec![$($args.to_string()),*],
                 vec![$($body),*],
+            )
+        };
+    }
+
+    /// build an [`Expression::Call`] and takes care of the "boxing" of the expressions
+    macro_rules! call {
+        ($id:expr; $($param:expr),* $(,)*) => {
+            Expression::Call(
+                Box::new($id),
+                vec![$(Box::new($param)),*],
             )
         };
     }
@@ -792,6 +863,77 @@ return 15 * 25;",
                 function!(() => {
                     Statement::Return(infix!(int!(1), Token::Plus, int!(2)))
                 }),
+            ),
+        ] {
+            parse(
+                input,
+                Program {
+                    statements: vec![Statement::Expression(statement)],
+                },
+            );
+        }
+    }
+
+    #[test]
+    fn call_expression() {
+        for (input, statement) in [
+            (
+                "f(1, 2 * 3, 4 + 5)",
+                call!(
+                    id!("f");
+                        int!(1),
+                        infix!(int!(2), Token::Asterisk, int!(3)),
+                        infix!(int!(4), Token::Plus, int!(5)),
+                ),
+            ),
+            (
+                "a + f(b * c) + d",
+                infix!(
+                    infix!(
+                        id!("a"),
+                        Token::Plus,
+                        call!(id!("f"); infix!(id!("b"), Token::Asterisk, id!("c"))),
+                    ),
+                    Token::Plus,
+                    id!("d")
+                ),
+            ),
+            (
+                "f(a, b, 1, 2 * 3, 4 + 5, g(6, 7 * 8))",
+                call!(
+                    id!("f");
+                        id!("a"),
+                        id!("b"),
+                        int!(1),
+                        infix!(int!(2), Token::Asterisk, int!(3)),
+                        infix!(int!(4), Token::Plus, int!(5)),
+                        call!(
+                            id!("g");
+                                int!(6),
+                                infix!(int!(7), Token::Asterisk, int!(8)),
+                        ),
+                ),
+            ),
+            (
+                "fn(x, y) { x + y; }(2, 3)",
+                call!(
+                    function!(("x", "y") => {
+                        Statement::Expression(infix!(id!("x"), Token::Plus, id!("y")))
+                    });
+                        int!(2),
+                        int!(3),
+                ),
+            ),
+            (
+                "f(2, 3, fn(x, y) { x + y; });",
+                call!(
+                    id!("f");
+                        int!(2),
+                        int!(3),
+                        function!(("x", "y") => {
+                            Statement::Expression(infix!(id!("x"), Token::Plus, id!("y")))
+                        }),
+                ),
             ),
         ] {
             parse(
