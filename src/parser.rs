@@ -120,6 +120,72 @@ impl Parser {
         Some(expr)
     }
 
+    fn parse_block_statement(&mut self) -> Vec<Statement> {
+        let mut statements = vec![];
+
+        self.next_token();
+
+        while !matches!(self.curr_token, Token::RightBrace)
+            && !matches!(self.curr_token, Token::EndOfFile)
+        {
+            if let Some(stmt) = self.parse_statement() {
+                statements.push(stmt)
+            }
+            self.next_token();
+        }
+
+        statements
+    }
+
+    fn parse_if_expression(&mut self) -> Option<Expression> {
+        self.next_token();
+        if !matches!(self.curr_token, Token::LeftParen) {
+            self.errors.push(format!(
+                "missing left parenthese in if expression, found {:?}",
+                self.curr_token,
+            ));
+            return None;
+        }
+
+        let cond = self.parse_expression(Precedence::LOWEST)?;
+
+        if !matches!(self.curr_token, Token::RightParen) {
+            self.errors.push(format!(
+                "missing right parenthese in if expression, found {:?}",
+                self.curr_token,
+            ));
+            return None;
+        }
+
+        self.next_token();
+        if !matches!(self.curr_token, Token::LeftBrace) {
+            self.errors.push(format!(
+                "missing left brace in if expression, found {:?}",
+                self.curr_token,
+            ));
+            return None;
+        }
+
+        let then = self.parse_block_statement();
+
+        let alt = if matches!(self.peek_token, Token::Else) {
+            self.next_token();
+            self.next_token();
+            if !matches!(self.curr_token, Token::LeftBrace) {
+                self.errors.push(format!(
+                    "missing left brace in if expression, found {:?}",
+                    self.curr_token,
+                ));
+                return None;
+            }
+            self.parse_block_statement()
+        } else {
+            vec![]
+        };
+
+        Some(Expression::If(Box::new(cond), then, alt))
+    }
+
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
         let mut expr = match &self.curr_token {
             Token::Identifier(id) => Expression::Identifier(id.to_string()),
@@ -143,6 +209,15 @@ impl Parser {
                 } else {
                     self.errors
                         .push("could not parse grouped expression".to_string());
+                    return None;
+                }
+            }
+            Token::If => {
+                if let Some(if_expr) = self.parse_if_expression() {
+                    if_expr
+                } else {
+                    self.errors
+                        .push("could not parse if expression".to_string());
                     return None;
                 }
             }
@@ -271,6 +346,15 @@ mod tests {
     macro_rules! infix {
         ($lhs:expr, $op:expr, $rhs:expr $(,)*) => {
             Expression::Infix(Box::new($lhs), $op, Box::new($rhs))
+        };
+    }
+    /// build an [`Expression::If`] and takes care of the "boxing" of the expressions
+    macro_rules! ifthenelse {
+        ($cond:expr => $($then:expr),* $(,)*) => {
+            Expression::If(Box::new($cond), vec![$($then),*], vec![])
+        };
+        ($cond:expr => $($then:expr),* => $($else:expr),* $(,)*) => {
+            Expression::If(Box::new($cond), vec![$($then),*], vec![$($else),*])
         };
     }
 
@@ -553,6 +637,43 @@ return 15 * 25;",
             (
                 "let barfoo = false;",
                 Statement::Let("barfoo".to_string(), FALSE),
+            ),
+        ] {
+            parse(
+                input,
+                Program {
+                    statements: vec![statement],
+                },
+            );
+        }
+    }
+
+    #[test]
+    fn if_expression() {
+        for (input, statement) in [
+            (
+                "if (x < y) { x }",
+                Statement::Expression(ifthenelse!(
+                    infix!(id!("x"), Token::LessThan, id!("y"))
+                        => Statement::Expression(id!("x"))
+                )),
+            ),
+            (
+                "if (x < y) { x } else { y }",
+                Statement::Expression(ifthenelse!(
+                    infix!(id!("x"), Token::LessThan, id!("y"))
+                        => Statement::Expression(id!("x"))
+                        => Statement::Expression(id!("y"))
+                )),
+            ),
+            (
+                "if (x < y) { 1 + 2; x } else { y }",
+                Statement::Expression(ifthenelse!(
+                    infix!(id!("x"), Token::LessThan, id!("y"))
+                        => Statement::Expression(infix!(int!(1), Token::Plus, int!(2))),
+                            Statement::Expression(id!("x"))
+                        => Statement::Expression(id!("y"))
+                )),
             ),
         ] {
             parse(

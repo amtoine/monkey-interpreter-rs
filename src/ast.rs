@@ -7,6 +7,7 @@ pub(crate) enum Expression {
     Prefix(Token, Box<Self>),
     Infix(Box<Self>, Token, Box<Self>),
     Boolean(bool),
+    If(Box<Self>, Vec<Statement>, Vec<Statement>),
     #[default]
     Dummy,
 }
