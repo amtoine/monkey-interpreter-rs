@@ -300,11 +300,16 @@ return add(1, 2);",
 
     #[test]
     fn prefix_expression() {
-        for (input, op, value) in [("!5;", Token::Bang, 5), ("-15", Token::Minus, 15)] {
+        for (input, op, value) in [
+            ("!5;", Token::Bang, int!(5)),
+            ("-15", Token::Minus, int!(15)),
+            ("!true", Token::Bang, Expression::Boolean(true)),
+            ("!false", Token::Bang, Expression::Boolean(false)),
+        ] {
             parse(
                 input,
                 Program {
-                    statements: vec![Statement::Expression(prefix!(op, int!(value)))],
+                    statements: vec![Statement::Expression(prefix!(op, value))],
                 },
             );
         }
@@ -313,19 +318,37 @@ return add(1, 2);",
     #[test]
     fn infix_expression() {
         for (input, lhs, op, rhs) in [
-            ("5 + 5;", 5, Token::Plus, 5),
-            ("5 - 5;", 5, Token::Minus, 5),
-            ("5 * 5;", 5, Token::Asterisk, 5),
-            ("5 / 5;", 5, Token::Slash, 5),
-            ("5 > 5;", 5, Token::GreaterThan, 5),
-            ("5 < 5;", 5, Token::LessThan, 5),
-            ("5 == 5;", 5, Token::EqualTo, 5),
-            ("5 != 5;", 5, Token::NotEqualTo, 5),
+            ("5 + 5;", int!(5), Token::Plus, int!(5)),
+            ("5 - 5;", int!(5), Token::Minus, int!(5)),
+            ("5 * 5;", int!(5), Token::Asterisk, int!(5)),
+            ("5 / 5;", int!(5), Token::Slash, int!(5)),
+            ("5 > 5;", int!(5), Token::GreaterThan, int!(5)),
+            ("5 < 5;", int!(5), Token::LessThan, int!(5)),
+            ("5 == 5;", int!(5), Token::EqualTo, int!(5)),
+            ("5 != 5;", int!(5), Token::NotEqualTo, int!(5)),
+            (
+                "true == true",
+                Expression::Boolean(true),
+                Token::EqualTo,
+                Expression::Boolean(true),
+            ),
+            (
+                "true != false",
+                Expression::Boolean(true),
+                Token::NotEqualTo,
+                Expression::Boolean(false),
+            ),
+            (
+                "false == false",
+                Expression::Boolean(false),
+                Token::EqualTo,
+                Expression::Boolean(false),
+            ),
         ] {
             parse(
                 input,
                 Program {
-                    statements: vec![Statement::Expression(infix!(int!(lhs), op, int!(rhs)))],
+                    statements: vec![Statement::Expression(infix!(lhs, op, rhs))],
                 },
             );
         }
@@ -446,6 +469,22 @@ return add(1, 2);",
                         Token::Plus,
                         infix!(int!(4), Token::Asterisk, int!(5)),
                     ),
+                ))],
+            ),
+            (
+                "3 > 5 == false",
+                vec![Statement::Expression(infix!(
+                    infix!(int!(3), Token::GreaterThan, int!(5)),
+                    Token::EqualTo,
+                    Expression::Boolean(false),
+                ))],
+            ),
+            (
+                "3 < 5 == false",
+                vec![Statement::Expression(infix!(
+                    infix!(int!(3), Token::LessThan, int!(5)),
+                    Token::EqualTo,
+                    Expression::Boolean(false),
                 ))],
             ),
         ] {
