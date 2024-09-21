@@ -529,12 +529,16 @@ mod tests {
         parse(
             "let x = 5;
 let y = 10;
-let foobar = 838383;",
+let foobar = 838383;
+let y = true;
+let foobar = y;",
             Program {
                 statements: vec![
                     Statement::Let("x".to_string(), int!(5)),
                     Statement::Let("y".to_string(), int!(10)),
                     Statement::Let("foobar".to_string(), int!(838383)),
+                    Statement::Let("y".to_string(), TRUE),
+                    Statement::Let("foobar".to_string(), id!("y")),
                 ],
             },
         );
