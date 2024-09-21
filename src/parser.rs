@@ -351,10 +351,18 @@ mod tests {
     /// build an [`Expression::If`] and takes care of the "boxing" of the expressions
     macro_rules! ifthenelse {
         ($cond:expr => $($then:expr),* $(,)*) => {
-            Expression::If(Box::new($cond), vec![$($then),*], vec![])
+            Expression::If(
+                Box::new($cond),
+                vec![$(Statement::Expression($then)),*],
+                vec![],
+            )
         };
         ($cond:expr => $($then:expr),* => $($else:expr),* $(,)*) => {
-            Expression::If(Box::new($cond), vec![$($then),*], vec![$($else),*])
+            Expression::If(
+                Box::new($cond),
+                vec![$(Statement::Expression($then)),*],
+                vec![$(Statement::Expression($else)),*],
+            )
         };
     }
 
@@ -654,25 +662,21 @@ return 15 * 25;",
             (
                 "if (x < y) { x }",
                 Statement::Expression(ifthenelse!(
-                    infix!(id!("x"), Token::LessThan, id!("y"))
-                        => Statement::Expression(id!("x"))
+                    infix!(id!("x"), Token::LessThan, id!("y")) => id!("x")
                 )),
             ),
             (
                 "if (x < y) { x } else { y }",
                 Statement::Expression(ifthenelse!(
-                    infix!(id!("x"), Token::LessThan, id!("y"))
-                        => Statement::Expression(id!("x"))
-                        => Statement::Expression(id!("y"))
+                    infix!(id!("x"), Token::LessThan, id!("y")) => id!("x") => id!("y")
                 )),
             ),
             (
                 "if (x < y) { 1 + 2; x } else { y }",
                 Statement::Expression(ifthenelse!(
                     infix!(id!("x"), Token::LessThan, id!("y"))
-                        => Statement::Expression(infix!(int!(1), Token::Plus, int!(2))),
-                            Statement::Expression(id!("x"))
-                        => Statement::Expression(id!("y"))
+                        => infix!(int!(1), Token::Plus, int!(2)), id!("x")
+                        => id!("y")
                 )),
             ),
         ] {
