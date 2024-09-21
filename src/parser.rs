@@ -661,29 +661,29 @@ return 15 * 25;",
         for (input, statement) in [
             (
                 "if (x < y) { x }",
-                Statement::Expression(ifthenelse!(
+                ifthenelse!(
                     infix!(id!("x"), Token::LessThan, id!("y")) => id!("x")
-                )),
+                ),
             ),
             (
                 "if (x < y) { x } else { y }",
-                Statement::Expression(ifthenelse!(
+                ifthenelse!(
                     infix!(id!("x"), Token::LessThan, id!("y")) => id!("x") => id!("y")
-                )),
+                ),
             ),
             (
                 "if (x < y) { 1 + 2; x } else { y }",
-                Statement::Expression(ifthenelse!(
+                ifthenelse!(
                     infix!(id!("x"), Token::LessThan, id!("y"))
                         => infix!(int!(1), Token::Plus, int!(2)), id!("x")
                         => id!("y")
-                )),
+                ),
             ),
         ] {
             parse(
                 input,
                 Program {
-                    statements: vec![statement],
+                    statements: vec![Statement::Expression(statement)],
                 },
             );
         }
