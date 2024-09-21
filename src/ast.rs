@@ -8,6 +8,7 @@ pub(crate) enum Expression {
     Infix(Box<Self>, Token, Box<Self>),
     Boolean(bool),
     If(Box<Self>, Vec<Statement>, Vec<Statement>),
+    Function(Vec<String>, Vec<Statement>),
     #[default]
     Dummy,
 }

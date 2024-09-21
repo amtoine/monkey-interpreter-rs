@@ -186,6 +186,75 @@ impl Parser {
         Some(Expression::If(Box::new(cond), then, alt))
     }
 
+    fn parse_function_parameters(&mut self) -> Vec<String> {
+        self.next_token();
+        if matches!(self.curr_token, Token::RightParen) {
+            return vec![];
+        }
+
+        let mut parameters = if let Token::Identifier(id) = &self.curr_token {
+            vec![id.to_string()]
+        } else {
+            self.errors.push(format!(
+                "expected identifiers in function parameters, found {:?}",
+                self.curr_token
+            ));
+            return vec![];
+        };
+
+        self.next_token();
+
+        while matches!(self.curr_token, Token::Comma) {
+            self.next_token();
+            if let Token::Identifier(id) = &self.curr_token {
+                parameters.push(id.to_string())
+            } else {
+                self.errors.push(format!(
+                    "expected identifiers in function parameters, found {:?}",
+                    self.curr_token
+                ));
+                return vec![];
+            }
+        }
+
+        self.next_token();
+        if !matches!(self.curr_token, Token::RightParen) {
+            self.errors.push(format!(
+                "missing right brace in function expression, found {:?}",
+                self.curr_token,
+            ));
+            return vec![];
+        }
+
+        parameters
+    }
+
+    fn parse_function_expression(&mut self) -> Option<Expression> {
+        self.next_token();
+        if !matches!(self.curr_token, Token::LeftParen) {
+            self.errors.push(format!(
+                "missing left parenthese in function expression, found {:?}",
+                self.curr_token,
+            ));
+            return None;
+        }
+
+        let parameters = self.parse_function_parameters();
+
+        self.next_token();
+        if !matches!(self.curr_token, Token::LeftBrace) {
+            self.errors.push(format!(
+                "missing left brace in function expression, found {:?}",
+                self.curr_token,
+            ));
+            return None;
+        }
+
+        let body = self.parse_block_statement();
+
+        Some(Expression::Function(parameters, body))
+    }
+
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
         let mut expr = match &self.curr_token {
             Token::Identifier(id) => Expression::Identifier(id.to_string()),
@@ -218,6 +287,15 @@ impl Parser {
                 } else {
                     self.errors
                         .push("could not parse if expression".to_string());
+                    return None;
+                }
+            }
+            Token::Function => {
+                if let Some(func_expr) = self.parse_function_expression() {
+                    func_expr
+                } else {
+                    self.errors
+                        .push("could not parse function expression".to_string());
                     return None;
                 }
             }
@@ -362,6 +440,15 @@ mod tests {
                 Box::new($cond),
                 vec![$(Statement::Expression($then)),*],
                 vec![$(Statement::Expression($else)),*],
+            )
+        };
+    }
+    /// build an [`Expression::Function`]
+    macro_rules! function {
+        (($($args:tt),*) => {$($body:expr),*}) => {
+            Expression::Function(
+                vec![$($args.to_string()),*],
+                vec![$($body),*],
             )
         };
     }
@@ -678,6 +765,33 @@ return 15 * 25;",
                         => infix!(int!(1), Token::Plus, int!(2)), id!("x")
                         => id!("y")
                 ),
+            ),
+        ] {
+            parse(
+                input,
+                Program {
+                    statements: vec![Statement::Expression(statement)],
+                },
+            );
+        }
+    }
+
+    #[test]
+    fn function_expression() {
+        for (input, statement) in [
+            ("fn() {}", function!(() => {})),
+            (
+                "fn(x, y) { x + y; }",
+                function!(("x", "y") => {
+                    Statement::Expression(infix!(id!("x"), Token::Plus, id!("y")))
+                }),
+            ),
+            ("fn(x, y) {}", function!(("x", "y") => {})),
+            (
+                "fn() { return 1 + 2; }",
+                function!(() => {
+                    Statement::Return(infix!(int!(1), Token::Plus, int!(2)))
+                }),
             ),
         ] {
             parse(
