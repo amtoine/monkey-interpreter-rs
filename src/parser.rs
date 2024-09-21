@@ -97,6 +97,29 @@ impl Parser {
         }
     }
 
+    fn parse_grouped_expression(&mut self) -> Option<Expression> {
+        self.next_token();
+
+        let expr = if let Some(expr) = self.parse_expression(Precedence::LOWEST) {
+            expr
+        } else {
+            self.errors
+                .push("could not parse expression in grouped expression".to_string());
+            return None;
+        };
+
+        self.next_token();
+        if !matches!(self.curr_token, Token::RightParen) {
+            self.errors.push(format!(
+                "missing right parentheses in grouped expression, found {:?}",
+                self.curr_token,
+            ));
+            return None;
+        }
+
+        Some(expr)
+    }
+
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
         let mut expr = match &self.curr_token {
             Token::Identifier(id) => Expression::Identifier(id.to_string()),
@@ -111,6 +134,15 @@ impl Parser {
                 } else {
                     self.errors
                         .push("could not parse prefix expression".to_string());
+                    return None;
+                }
+            }
+            Token::LeftParen => {
+                if let Some(grouped_expr) = self.parse_grouped_expression() {
+                    grouped_expr
+                } else {
+                    self.errors
+                        .push("could not parse grouped expression".to_string());
                     return None;
                 }
             }
@@ -258,17 +290,11 @@ let foobar = 838383;",
     fn return_statements() {
         parse(
             "return 5;
-return 15 * 25;
-return add(1, 2);",
+return 15 * 25;",
             Program {
                 statements: vec![
                     Statement::Return(int!(5)),
                     Statement::Return(infix!(int!(15), Token::Asterisk, int!(25),)),
-                    // NOTE: the next three statements should be a single one after the function
-                    // calls are implemented
-                    Statement::Return(id!("add")),
-                    Statement::Expression(int!(1)),
-                    Statement::Expression(int!(2)),
                 ],
             },
         );
@@ -466,6 +492,44 @@ return add(1, 2);",
                     infix!(int!(3), Token::LessThan, int!(5)),
                     Token::EqualTo,
                     FALSE,
+                ))],
+            ),
+            (
+                "1 + (2 + 3) + 4",
+                vec![Statement::Expression(infix!(
+                    infix!(int!(1), Token::Plus, infix!(int!(2), Token::Plus, int!(3))),
+                    Token::Plus,
+                    int!(4)
+                ))],
+            ),
+            (
+                "(5 + 5) * 2",
+                vec![Statement::Expression(infix!(
+                    infix!(int!(5), Token::Plus, int!(5)),
+                    Token::Asterisk,
+                    int!(2)
+                ))],
+            ),
+            (
+                "2 / (5 + 5)",
+                vec![Statement::Expression(infix!(
+                    int!(2),
+                    Token::Slash,
+                    infix!(int!(5), Token::Plus, int!(5))
+                ))],
+            ),
+            (
+                "-(5 + 5)",
+                vec![Statement::Expression(prefix!(
+                    Token::Minus,
+                    infix!(int!(5), Token::Plus, int!(5))
+                ))],
+            ),
+            (
+                "!(true == true)",
+                vec![Statement::Expression(prefix!(
+                    Token::Bang,
+                    infix!(TRUE, Token::EqualTo, TRUE)
                 ))],
             ),
         ] {
