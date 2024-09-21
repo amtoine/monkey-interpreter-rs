@@ -6,24 +6,24 @@ use crate::{
 
 #[derive(PartialEq, PartialOrd)]
 enum Precedence {
-    LOWEST,
-    EQUALS,
-    LESSGREATER,
-    SUM,
-    PRODUCT,
-    PREFIX,
-    CALL,
+    Lowest,
+    Equals,
+    Lessgreater,
+    Sum,
+    Product,
+    Prefix,
+    Call,
 }
 
 impl From<Token> for Precedence {
     fn from(token: Token) -> Self {
         match token {
-            Token::EqualTo | Token::NotEqualTo => Self::EQUALS,
-            Token::LessThan | Token::GreaterThan => Self::LESSGREATER,
-            Token::Plus | Token::Minus => Self::SUM,
-            Token::Slash | Token::Asterisk => Self::PRODUCT,
-            Token::LeftParen => Self::CALL,
-            _ => Self::LOWEST,
+            Token::EqualTo | Token::NotEqualTo => Self::Equals,
+            Token::LessThan | Token::GreaterThan => Self::Lessgreater,
+            Token::Plus | Token::Minus => Self::Sum,
+            Token::Slash | Token::Asterisk => Self::Product,
+            Token::LeftParen => Self::Call,
+            _ => Self::Lowest,
         }
     }
 }
@@ -77,7 +77,7 @@ impl Parser {
 
         self.next_token();
 
-        if let Some(expr) = self.parse_expression(Precedence::LOWEST) {
+        if let Some(expr) = self.parse_expression(Precedence::Lowest) {
             Some(Statement::Let(name, expr))
         } else {
             self.errors
@@ -89,7 +89,7 @@ impl Parser {
     fn parse_return_statement(&mut self) -> Option<Statement> {
         self.next_token();
 
-        if let Some(expr) = self.parse_expression(Precedence::LOWEST) {
+        if let Some(expr) = self.parse_expression(Precedence::Lowest) {
             Some(Statement::Return(expr))
         } else {
             self.errors
@@ -101,7 +101,7 @@ impl Parser {
     fn parse_grouped_expression(&mut self) -> Option<Expression> {
         self.next_token();
 
-        let expr = if let Some(expr) = self.parse_expression(Precedence::LOWEST) {
+        let expr = if let Some(expr) = self.parse_expression(Precedence::Lowest) {
             expr
         } else {
             self.errors
@@ -148,7 +148,7 @@ impl Parser {
             return None;
         }
 
-        let cond = self.parse_expression(Precedence::LOWEST)?;
+        let cond = self.parse_expression(Precedence::Lowest)?;
 
         if !matches!(self.curr_token, Token::RightParen) {
             self.errors.push(format!(
@@ -263,7 +263,7 @@ impl Parser {
         }
 
         self.next_token();
-        let mut arguments = if let Some(expr) = self.parse_expression(Precedence::LOWEST) {
+        let mut arguments = if let Some(expr) = self.parse_expression(Precedence::Lowest) {
             vec![expr]
         } else {
             self.errors
@@ -274,7 +274,7 @@ impl Parser {
         while matches!(self.peek_token, Token::Comma) {
             self.next_token();
             self.next_token();
-            if let Some(expr) = self.parse_expression(Precedence::LOWEST) {
+            if let Some(expr) = self.parse_expression(Precedence::Lowest) {
                 arguments.push(expr)
             } else {
                 self.errors
@@ -298,13 +298,7 @@ impl Parser {
     fn parse_call_expression(&mut self, expr: Expression) -> Option<Expression> {
         let arguments = self.parse_call_arguments();
 
-        Some(Expression::Call(
-            Box::new(expr),
-            arguments
-                .into_iter()
-                .map(|a| Box::new(a))
-                .collect::<Vec<_>>(),
-        ))
+        Some(Expression::Call(Box::new(expr), arguments))
     }
 
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Expression> {
@@ -316,7 +310,7 @@ impl Parser {
             Token::Bang | Token::Minus => {
                 let op = self.curr_token.clone();
                 self.next_token();
-                if let Some(rhs) = self.parse_expression(Precedence::PREFIX) {
+                if let Some(rhs) = self.parse_expression(Precedence::Prefix) {
                     Expression::Prefix(op, Box::new(rhs))
                 } else {
                     self.errors
@@ -402,10 +396,8 @@ impl Parser {
     }
 
     fn parse_expression_statement(&mut self) -> Option<Statement> {
-        match self.parse_expression(Precedence::LOWEST) {
-            Some(expr) => Some(Statement::Expression(expr)),
-            None => None,
-        }
+        self.parse_expression(Precedence::Lowest)
+            .map(Statement::Expression)
     }
 
     fn parse_statement(&mut self) -> Option<Statement> {
@@ -519,7 +511,7 @@ mod tests {
         ($id:expr; $($param:expr),* $(,)*) => {
             Expression::Call(
                 Box::new($id),
-                vec![$(Box::new($param)),*],
+                vec![$($param),*],
             )
         };
     }

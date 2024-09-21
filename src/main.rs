@@ -17,7 +17,7 @@ fn main() {
         let ast = parser.parse();
         println!("{:#?}", ast);
 
-        if parser.errors.len() > 0 {
+        if !parser.errors.is_empty() {
             eprintln!("ERRORS: {:#?}", parser.errors);
         }
     }
