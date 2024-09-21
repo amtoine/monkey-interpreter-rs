@@ -207,6 +207,8 @@ mod tests {
         assert_eq!(parsed, expected, "\n===\n{}\n===", input);
     }
 
+    const TRUE: Expression = Expression::Boolean(true);
+    const FALSE: Expression = Expression::Boolean(false);
     /// builds an [`Expression::IntegerLitteral`]
     macro_rules! int {
         ($val:expr) => {
@@ -297,8 +299,8 @@ return add(1, 2);",
         for (input, op, value) in [
             ("!5;", Token::Bang, int!(5)),
             ("-15", Token::Minus, int!(15)),
-            ("!true", Token::Bang, Expression::Boolean(true)),
-            ("!false", Token::Bang, Expression::Boolean(false)),
+            ("!true", Token::Bang, TRUE),
+            ("!false", Token::Bang, FALSE),
         ] {
             parse(
                 input,
@@ -320,24 +322,9 @@ return add(1, 2);",
             ("5 < 5;", int!(5), Token::LessThan, int!(5)),
             ("5 == 5;", int!(5), Token::EqualTo, int!(5)),
             ("5 != 5;", int!(5), Token::NotEqualTo, int!(5)),
-            (
-                "true == true",
-                Expression::Boolean(true),
-                Token::EqualTo,
-                Expression::Boolean(true),
-            ),
-            (
-                "true != false",
-                Expression::Boolean(true),
-                Token::NotEqualTo,
-                Expression::Boolean(false),
-            ),
-            (
-                "false == false",
-                Expression::Boolean(false),
-                Token::EqualTo,
-                Expression::Boolean(false),
-            ),
+            ("true == true", TRUE, Token::EqualTo, TRUE),
+            ("true != false", TRUE, Token::NotEqualTo, FALSE),
+            ("false == false", FALSE, Token::EqualTo, FALSE),
         ] {
             parse(
                 input,
@@ -470,7 +457,7 @@ return add(1, 2);",
                 vec![Statement::Expression(infix!(
                     infix!(int!(3), Token::GreaterThan, int!(5)),
                     Token::EqualTo,
-                    Expression::Boolean(false),
+                    FALSE,
                 ))],
             ),
             (
@@ -478,7 +465,7 @@ return add(1, 2);",
                 vec![Statement::Expression(infix!(
                     infix!(int!(3), Token::LessThan, int!(5)),
                     Token::EqualTo,
-                    Expression::Boolean(false),
+                    FALSE,
                 ))],
             ),
         ] {
@@ -489,15 +476,15 @@ return add(1, 2);",
     #[test]
     fn boolean_expression() {
         for (input, statement) in [
-            ("true;", Statement::Expression(Expression::Boolean(true))),
-            ("false;", Statement::Expression(Expression::Boolean(false))),
+            ("true;", Statement::Expression(TRUE)),
+            ("false;", Statement::Expression(FALSE)),
             (
                 "let foobar = true;",
-                Statement::Let("foobar".to_string(), Expression::Boolean(true)),
+                Statement::Let("foobar".to_string(), TRUE),
             ),
             (
                 "let barfoo = false;",
-                Statement::Let("barfoo".to_string(), Expression::Boolean(false)),
+                Statement::Let("barfoo".to_string(), FALSE),
             ),
         ] {
             parse(
