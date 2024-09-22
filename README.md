@@ -1,6 +1,12 @@
 # monkey-interpreter-rs
 Writing an interpreter for Monkey in Rust.
 
+## Introduction
+
+this project is a Rust implementation of [_Writing An Interpreter In Go_](https://interpreterbook.com/).
+
+see the Monkey language [here](https://monkeylang.org/#what-is-monkey).
+
 ## Example
 there is currently a very simple CLI in [`main.rs`](src/main.rs) that can run with
 ```shell
@@ -16,7 +22,7 @@ then, typing Monkey code should output the resulting AST, e.g.
 let f = fn(x, y) { return x + y; }; f(1, 2);
 ```
 will generate the following AST
-```
+```js
 Program {
     statements: [
         Let(
